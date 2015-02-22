@@ -17,11 +17,11 @@ header {
 }
 
 header a {
+  color: rgba(0,0,0,0.3);
   text-decoration: none;
 }
 
 header li {
-  color: rgba(0,0,0,0.3);
   text-align: center;
   display: inline;
   width: 60px;
@@ -36,15 +36,30 @@ header li.active {
   border-bottom: 1px solid rgba(0,0,0,0.8);
 }
 
-h1 {
+h1, h2, h3, h4, h5, h6 {
   font-family: 'Lato', sans-serif;
-  font-size: 36px;
   margin: 20px 0;
 }
 
-.date-pub {
-  font-style: italic;
-  color: rgba(0,0,0,0.3);
+h1 {
+  font-weight: 900;
+  font-size: 36px;
+}
+
+h2 {
+  font-weight: 900;
+  font-size: 24px;
+}
+
+.lead {
+  font-family: 'Lato', sans-serif;
+  font-weight: 300;
+  font-size: 24px;
+  margin: 20px 0;
+}
+
+.signature {
+  font-family: 'Lato', sans-serif;
   margin: 20px 0;
 }
 
@@ -57,9 +72,12 @@ pre {
 }
 
 footer {
-  font-style: italic;
+  font-family: 'Lato', sans-serif;
   color: rgba(0,0,0,0.3);
   border-top: 1px solid rgba(0,0,0,0.3);
-  padding-top: 10px;
-  margin: 20px 0;
+  margin: 50px 0;
+}
+
+footer a {
+  color: rgba(0,0,0,0.3);
 }
