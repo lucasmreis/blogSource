@@ -75,6 +75,11 @@ p strong {
   font-weight: bold;
 }
 
+ul {
+  list-style-type: disc;
+  list-style-position: inside;
+}
+
 pre {
   font-family: 'Source Code Pro', Courier New, monospace;
   margin: 20px 0;
