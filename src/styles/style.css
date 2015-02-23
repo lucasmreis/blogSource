@@ -55,7 +55,7 @@ h2 {
   font-family: 'Lato', sans-serif;
   font-weight: 300;
   font-size: 24px;
-  margin: 20px 0;
+  margin: 20px 0 40px 0;
 }
 
 .signature {
@@ -67,8 +67,17 @@ p {
   margin: 20px 0;
 }
 
+p em {
+  font-style: italic;
+}
+
+p strong {
+  font-weight: bold;
+}
+
 pre {
   font-family: 'Source Code Pro', Courier New, monospace;
+  margin: 20px 0;
 }
 
 footer {
