@@ -1,2 +1,2 @@
 # blogSource
-Source ode for personal blog
+Source code for personal blog

@@ -95,3 +95,15 @@ footer {
 footer a {
   color: rgba(0,0,0,0.3);
 }
+
+.index-list {
+  margin: 10px 0 10px 0;
+}
+
+.index-list .date {
+  font-family: 'Lato', sans-serif;
+}
+
+.index-list a {
+  font-family: 'Libre Baskerville', serif;
+}
