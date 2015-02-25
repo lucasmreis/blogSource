@@ -22,7 +22,7 @@
         <h1>{{ title }}</h1>
         <div class="lead">{{ lead }}</div>
         {{{ contents }}}
-        <div class="signature">{{ date }}.</div>
+        <div class="signature">{{ longDate }}.</div>
       </div>
       <footer>
         by Lucas Reis | <a href="https://github.com/lucasmreis">GitHub</a> | <a href="https://www.linkedin.com/profile/view?id=133974663">LinkedIn</a>

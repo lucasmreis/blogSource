@@ -6,8 +6,8 @@ body {
 }
 
 #container {
-  width: 50%;
-  min-width: 300px;
+  max-width: 34em;
+  padding: 0 15px;
   margin: 50px auto;
 }
 
@@ -34,6 +34,24 @@ header li.active {
   font-weight: 600;
   color: rgba(0,0,0,0.8);
   border-bottom: 1px solid rgba(0,0,0,0.8);
+}
+
+.myself {
+  width: 250px;
+  height: 250px;
+  border-radius: 125px;
+  -webkit-border-radius: 125px;
+  -moz-border-radius: 125px;
+  margin: 0 auto;
+  display: block;
+}
+
+.main-title {
+  text-align: center;
+}
+
+.secondary-title {
+  text-align: center;
 }
 
 h1, h2, h3, h4, h5, h6 {
