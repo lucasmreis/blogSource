@@ -85,11 +85,11 @@ p {
   margin: 20px 0;
 }
 
-p em {
+em {
   font-style: italic;
 }
 
-p strong {
+strong {
   font-weight: bold;
 }
 
