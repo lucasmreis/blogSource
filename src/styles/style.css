@@ -98,9 +98,27 @@ ul {
   list-style-position: inside;
 }
 
-pre {
+ul {
+  list-style-type: decimal;
+  list-style-position: inside;
+}
+
+ul li {
+  margin-bottom: 10px;
+}
+
+pre, code {
   font-family: 'Source Code Pro', Courier New, monospace;
   margin: 20px 0;
+}
+
+p code {
+  background-color: #f0f0f0;
+  padding: 1px 5px 2px 5px;
+}
+
+pre {
+  font-size: 15px;
 }
 
 footer {
