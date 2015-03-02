@@ -14,7 +14,7 @@
     <div id="container">
       <header>
         <ul>
-          <li class="active"><a href="#">Blog</a></li>
+          <li class="active"><a href="../contents/">Blog</a></li>
           <li><a href="../">About</a></li>
         </ul>
       </header>

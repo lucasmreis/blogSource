@@ -1,4 +1,4 @@
 ---
-title: Blog
+title: Contents
 template: index.hbt
 ---
