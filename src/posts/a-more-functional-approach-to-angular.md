@@ -73,7 +73,7 @@ Now let's take this Foo example a little further, and start changing the State.
 
 ## A More Complete Example
 
-Let's `AppStateService` hold a `foos` array. We want a view with an input and a button that, when pressed, add a new Foo to `foos`:
+Let `AppStateService` hold a `foos` array. We want a view with an input and a button that, when pressed, add a new Foo to `foos`:
 
 ```javascript
 angular.module('simpleStateApp')
