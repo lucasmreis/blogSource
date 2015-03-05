@@ -31,7 +31,7 @@ function buildCallback(err) {
     console.log(err);
   } else {
     console.log('Build complete!');
-  } 
+  }
 };
 
 function formatDate() {
@@ -50,7 +50,11 @@ function addLink() {
   return function(files, metalsmith, done) {
     for (var file in files) {
       if (files[file].title) {
-        files[file].link = files[file].title.trim().toLowerCase().replace(/ /g, '-');
+        files[file].link = files[file].title
+          .trim()
+          .toLowerCase()
+          .replace(/,/g, '')
+          .replace(/ /g, '-');
       }
     }
     done();
