@@ -14,7 +14,7 @@ I can see now that most of that complexity was coming from the way I was storing
 
 ## The Solution
 
-In order to solve this problem, I took a *functional* approach by avoiding mutation as much possible and only changing variables in a few controlled places. In addition, to take it a step further, I stored *all the application state in a single place* (some React frameworks work this way, like [Om](https://github.com/omcljs/om) and [Morearty](https://github.com/moreartyjs/moreartyjs)).
+In order to solve this problem, I took a more *functional* approach by avoiding mutation as much possible and only changing variables in a few controlled places. In addition, to take it a step further, I stored *all the application state in a single place* (some React frameworks work this way, like [Om](https://github.com/omcljs/om) and [Morearty](https://github.com/moreartyjs/moreartyjs)).
 
 The architecture is simple: all the State will be in one factory. Other services will consist of pure functions. The controllers will listen and/or change the State. And that's it! Let me explain it more, and illustrate with an example.
 
