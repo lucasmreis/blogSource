@@ -1,22 +1,22 @@
 ---
-title: A more functional approach to Angular, with Baobab 
+title: A more functional approach to Angular, with Baobab
 lead: Even simpler and more powerful
 template: post.hbt
 date: 2015-03-05
 tags: javascript, angular, functional, state
 ---
 
-[Last post]() I described a simple way to deal with state in an Angular application. I didn't detail the actual `AppStateService` implementation, and was about to do it in a "part 2". That's when I came across *Baobab*, a framework-agnostic library that actually implements the idea of a centralized State. In this post I'll recap a little bit on why the concept of a centralized State is important, I'll present the Baobab library, and I'll describe an adaptation of the last post's sample app that uses it.
+[Last post]() I described a simple way to deal with state in an Angular application. I didn't detail the actual `AppStateService` implementation, and was about to do it in a "part 2". That's when I came across *Baobab*, a framework-agnostic library that actually implements the idea of a centralized state. In this post I'll recap a little bit on why the concept of a centralized state is important, then I'll present the Baobab library, and finally I'll describe an adaptation of the last post's sample app that uses it.
 
-## Why a central state is important?
+## Why is having a central state important?
 
-A *state* can be thought of a "picture", or the "value", of something in a certain point in time. I'll call *central state* the value of your whole application in a certain point in time. So, as your application changes in time, every little part of that change will be stored in this central place. 
+A *state* can be thought of a "picture", or the "value", of something in a certain point in time. I'll call *central state* the value of your *whole application* in a certain point in time. So, as your application changes in time, every little part of that change will be stored in this central place.
 
 BUT WHY
 
 ## Presenting Baobab
 
-In Baobab, the central state is created by passing a regular object to Baobab constructor:
+In Baobab, the central state is created by passing a regular object to the constructor:
 
 ```javascript
 // if using node or browserify:
@@ -37,7 +37,7 @@ var cartCursor = appState.select('cart');
 var productsCursor = appState.select('cart', 'products');
 ```
 
-The `select` function returns a *cursor*. The first thing you can do with a cursor is *extracting its value*:
+`select` returns a *cursor*. The first thing you can do with a cursor is *extracting its value*:
 
 ```javascript
 var currentCart = cartCursor.get();
@@ -65,7 +65,7 @@ What's so great about it? First, the "listening" part of your application does n
 
 ## A sample app
 
-Now let's use it on a sample application. In it, we'll have two arrays: Foos and Bars. Both will hold strings. To add a weird spec to the mix, the user cannot add any Bar unless Foos has the string `'requiredFoo'`. Let's implement it piece by piece, starting with the central state:
+Now let's use it on a sample application. In it, we'll have two arrays: Foos and Bars. Both will hold strings. To add a weird spec to the mix, the user should not be able to add any Bar unless Foos has the string `'requiredFoo'`. Let's implement it piece by piece, starting with the central state:
 
 ```javascript
 // app.js
@@ -74,13 +74,13 @@ angular.module('simpleStateApp', []);
 // services/appState.js
 angular.module('simpleStateApp')
   .factory('AppState', function() {
-  
+
   var initial = {
     foos: [],
     bars: []
   };
   var state = new Baobab(initial);
-  
+
   return state;
 ```
 
@@ -90,16 +90,16 @@ Simple and elegant. Don't we all like when that happens? :) Now let's implement 
 // controllers/readOnlyController.js
 angular.module('simpleStateApp')
   .controller('ReadOnlyCtrl', function(AppState) {
-  
+
   var state = AppState.get();
 
   var foosCursor = AppState.select('foos');
   var barsCursor = AppState.select('bars');
 
-  foosCursor.on('update', 
+  foosCursor.on('update',
     function() { state.foos = foosCursor.get(); });
 
-  barsCursor.on('update', 
+  barsCursor.on('update',
     function() { state.bars = barsCursor.get(); });
 
   // exposes to view
@@ -117,7 +117,7 @@ angular.module('simpleStateApp')
       <li ng-repeat="foo in c.state.foos">{{ foo }}</li>
     </ul>
   </p>
-  <p>Bars: 
+  <p>Bars:
     <ul>
       <li ng-repeat="bar in c.state.bars">{{ bar }}</li>
     </ul>
@@ -125,26 +125,26 @@ angular.module('simpleStateApp')
 </div>
 ```
 
-Now let's implement a controller that changes the central state:
+That was easy! Now let's implement a controller that changes the central state:
 
 ```javascript
 // controllers/fooController.js
 angular.module('simpleStateApp')
   .controller('FooCtrl', function(AppState) {
-  
+
   var foosCursor = AppState.select('foos');
 
-  var state = { 
+  var state = {
     foos: foosCursor.get()
   };
-  
+
   // the inputs in the view will refer to
   // this variable
   var form = {
     newFoo: ''
   };
 
-  foosCursor.on('update', 
+  foosCursor.on('update',
     function() { state.foos = foosCursor.get() });
 
   var addFoo = function(form) {
@@ -158,7 +158,7 @@ angular.module('simpleStateApp')
 });
 ```
 
-And the view:
+Note the `form` variable. It holds the temporary values of the HTML inputs. The `addFoo` function receive this as the parameter, and change the value of the tree. We'll call `addFoo` with a button `ng-click`, but that's a design decision. It could also be on the input `ng-change`, for instance. Let's see the view code:
 
 ```html
 <div ng-controller="FooCtrl as c">
@@ -170,7 +170,7 @@ And the view:
 </div>
 ```
 
-`BarCtrl` is a little more complicated: it has the `cannotAddBar` function that implements the weird spec, and `clearState` that clears central state:
+`BarCtrl` has more features: `cannotAddBar`, the function that implements the weird spec, and `clearState`, the function that clears central state:
 
 ```javascript
 // controllers/barController.js
@@ -185,9 +185,9 @@ angular.module('simpleStateApp')
     newBar: ''
   };
 
-  foosCursor.on('update', 
+  foosCursor.on('update',
     function() { state.foos = foosCursor.get(); });
-  barsCursor.on('update', 
+  barsCursor.on('update',
     function() { state.bars = barsCursor.get(); });
 
   var addBar = function(form) {
@@ -220,7 +220,7 @@ With the view:
   <h3>Second "Bar" form</h3>
     <p>
       New Bar: <input type="text" ng-model="c.form.newBar">
-      <button ng-click="c.addBar(c.form)" 
+      <button ng-click="c.addBar(c.form)"
               ng-disabled="c.cannotAddBar(c.state)">
         Add Bar
       </button>
@@ -231,6 +231,7 @@ With the view:
 </div>
 ```
 
+And that's
 
 
 ## Conclusions
