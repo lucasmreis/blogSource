@@ -16,11 +16,11 @@ I can see now that most of that complexity was coming from the way I was storing
 
 In order to solve this problem, I took a more *functional* approach by avoiding mutation as much possible and only changing variables in a few controlled places. In addition, to take it a step further, I stored *all the application state in a single place* (some React frameworks work this way, like [Om](https://github.com/omcljs/om) and [Morearty](https://github.com/moreartyjs/moreartyjs)).
 
-The architecture is simple: all the State will be in one factory. Other services will consist of pure functions. The controllers will listen and/or change the State. And that's it! Let me explain it more, and illustrate with an example.
+The architecture is simple: all the state will be in one factory. Other services will consist of pure functions. The controllers will listen and/or change the state. And that's it! Let me explain it more, and illustrate with an example.
 
 Remark: the solution will be illustrated in Angular, but it could, with little work, be implemented in other frameworks (or even vanilla JS for that matter).
 
-The State will be stored in the `AppStateService` service. It has two methods: `listen` and  `change`. `listen` is used to observe one part of the State. Every time the `change` method is called, the listeners will be updated.
+The state will be stored in the `AppStateService` service. It has two methods: `listen` and  `change`. `listen` is used to observe one part of the state. Every time the `change` method is called, the listeners will be updated.
 
 The controllers will have a `state` variable exposed to the views, which will be listening to `AppStateService`. It's important the that variable remain *immutable*; let's remember that `AppStateService` should only be mutated via the `change` method:
 
@@ -79,11 +79,6 @@ Let `AppStateService` hold a `foos` array. We want a view with an input and a bu
 angular.module('simpleStateApp')
   .controller('FooCtrl', function(AppStateService) {
 
-  // using Ramda library
-  var compose = R.compose;
-  var append = R.append;
-  var get = R.get;
-
   var state = {};
   var form = {
     newFoo: ''
@@ -92,15 +87,15 @@ angular.module('simpleStateApp')
   AppStateService.listen('foos',
     function(f) { state.foos = f; });
 
-  // change function is curried
+  // changeFoos is a function that
+  // only affects the foos property
   var changeFoos = AppStateService.change('foos');
 
   var addFoo = function(state, form) {
-    return compose(
-      changeFoos,
-      append(form.newFoo),
-      get('foos')
-      )(state);
+    // using Ramda library
+    var newFoos =
+      R.append(form.newFoo, state.foos);
+    changeFoos(newFoos);
   };
 
   // exposed to the view:
@@ -123,15 +118,15 @@ angular.module('simpleStateApp')
 </div>
 ```
 
-So, now we have a `addFoo` function. It changes the State by appending `form.newFoo` to the `foos` array. The best part is: every part of the application listening to the `foos` array will be updated once the `changeFoos` function is called!
+So, now we have an `addFoo` function. It changes the state by appending `form.newFoo` to the `foos` array. The best part is: every part of the application listening to the `foos` array will be updated once the `changeFoos` function is called!
 
 I setup a small project illustrating that idea [on Github](https://github.com/lucasmreis/simpleStateApp). It illustrates well the benefits of using this approach:
 
 1. There's a "read only" controller, listening to both `foos` and `bars` arrays from `AppStateService`;
 2. There's a Foo controller;
 3. There's a Bar controller being used in *two* different views;
-4. The Bar controller also listens to `foos`, and the user can only add a Bar after a Foo named `requiredFoo` is created. This is used to illustrate how different controllers can interplay in intricate ways through the State;
-5. The application also listens to changes in State and save them on local storage.
+4. The Bar controller also listens to `foos`, and the user can only add a Bar after a Foo named `requiredFoo` is created (I call this the "weird spec" :) ). This is used to illustrate how different controllers can interplay in intricate ways through the State;
+5. The application also listens to changes in state and save them on local storage.
 
 ## Conclusions
 
