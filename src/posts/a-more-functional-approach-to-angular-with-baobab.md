@@ -6,13 +6,15 @@ date: 2015-03-05
 tags: javascript, angular, functional, state
 ---
 
-[Last post]() I described a simple way to deal with state in an Angular application. I didn't detail the actual `AppStateService` implementation, and was about to do it in a "part 2". That's when I came across *Baobab*, a framework-agnostic library that actually implements the idea of a centralized state. In this post I'll recap a little bit on why the concept of a centralized state is important, then I'll present the Baobab library, and finally I'll describe an adaptation of the last post's sample app that uses it.
+[Last post](http://lucasmreis.github.io/blog/a-more-functional-approach-to-angular/) I described a simple way to deal with state in an Angular application. I didn't detail the actual `AppStateService` implementation, and was about to do it in a "part 2". That's when I came across *Baobab*, a framework-agnostic library that actually implements the idea of a centralized state. In this post I'll recap a little bit on why the concept of a centralized state is important, then I'll present the Baobab library, and finally I'll describe an adaptation of the last post's sample app that uses it.
 
 ## Why is having a central state important?
 
-A *state* can be thought of a "picture", or the "value", of something in a certain point in time. I'll call *central state* the value of your *whole application* in a certain point in time. So, as your application changes in time, every little part of that change will be stored in this central place.
+A *state* can be thought of a "picture", or the "value", of something in a certain point in time. I'll call *central state* the value of your *whole application* in a certain point in time. So, as your application changes, every little part of that change will be stored in this central place.
 
-BUT WHY
+Having present and past states stored in a single place makes it easier to implement new features in an application, and change old ones. It's easier to make sense of what's happening in it. And as I said in the [previously mentioned post](http://lucasmreis.github.io/blog/a-more-functional-approach-to-angular/):
+
+> As the project grows, the complexity seems to grow at a higher rate, and it becomes more and more difficult to answer the simple question *what is happening to my application right now?* Or the even more important *what was happening when that crazy error occurred?*
 
 ## Presenting Baobab
 
@@ -30,7 +32,7 @@ var appState = new Baobab({
 });
 ```
 
-One can refer to any part of the tree with a the `select` function:
+One can refer to any part of the tree with the `select` function:
 
 ```javascript
 var cartCursor = appState.select('cart');
@@ -231,13 +233,116 @@ With the view:
 </div>
 ```
 
-And that's
+And that's it! But wait, there's a little problem we need to deal with. The views do not update as soon as the central state is updated. This happens because Angular's change detection mechanism is not triggered by an update in the central state. We can fix it by putting this piece of code inside `AppState`:
 
+```javascript
+// services/appState.js
+state.on('update', function () {
+  setTimeout(function () {
+    $rootScope.$apply();
+  }, 0);
+});
+```
+
+And our application will run smoothly!
+
+## Adding features
+
+That's when this architecture shines. Because everything that  changes is stored in one place, we can easily plug new functionalities by interacting with the central state. 
+
+Let's suppose we want to save our state in the local storage, so that every time the user go back to it, the last state will be loaded. 
+
+The idea is to load the saved state when starting the app, and saving it on every change. Let's first implement a `save` and a `load` function in a service:
+
+```javascript
+// services/storageService.js
+angular.module('simpleStateApp')
+  .factory('StorageService', function() {
+  
+  var save = function(prop, items) {
+    window.localStorage.setItem(
+      'baobab-app-' + prop, 
+      JSON.stringify(items));
+    return items;
+  };
+
+  var load = function(prop, defaultValue) {
+    var items = JSON.parse(
+      window.localStorage.getItem(
+        'baobab-app-' + prop));
+    return items ? items : defaultValue;
+  };
+
+  return {
+    save: save,
+    load: load
+  };
+});
+```
+
+Now let's change `AppState` to load local storage on startup:
+
+```javascript
+var initial = {
+  foos: [],
+  bars: []
+};
+var state = new Baobab(
+  StorageService.load('baobab', initial),
+);
+```
+
+And let's use a `.run` to save the state on every update:
+
+```javascript
+angular.module('simpleStateApp', [])
+  .run(function(StorageService, AppState) {
+    AppState.on('update', 
+      function() { 
+        StorageService.save('baobab', AppState.get()); 
+      });
+  });
+```
+
+And the new feature is added. It shined, didn't it? :)
+
+## One little Baobab bonus
+
+Baobab does it work very well, and still gives us a free important and amazing bonus: undo. We just have to first pass a config to the constructor:
+
+```javascript
+// services/appState.js
+var state = new Baobab(
+  StorageService.load('baobab', initial),
+  { 
+    maxHistory: 10
+  }
+);
+```
+
+And implement the `undo` function on the controller:
+
+```javascript
+// controllers/barController.js
+var undo = function() { 
+  if (AppState.hasHistory()) { 
+    AppState.undo(); 
+  }
+};
+```
+
+And our undo is done.
 
 ## Conclusions
 
-xxx
+That was a lot for a post! But I hope I could show some benefits of having a centralized state application architecture. It's all about being very simple to add new features and change old ones, and, as was said before, answering the really important question *what is happening in my application right now?*
 
 ## Next steps
 
-xxx
+Javascript is going through a big change now with ES6, and Angular 2 is on its way. I'm looking forward to see how to implement a centralized state using these tools.
+
+React is a great framework, that's gaining a lot of traction. I knew about Baobab through [Christian Alfoni](http://christianalfoni.github.io/)'s amazing blog, and he wrote an amazing post on [how to use it with React](http://christianalfoni.github.io/javascript/2015/02/06/plant-a-baobab-tree-in-your-flux-application.html).
+
+On another note, I will also implement the app in a *point-free functional* style. I try to write my functions point-free whenever I can; it's also a way to bring simplicity to the function level. More details in an upcoming post!
+
+The example presented in this post has a [live demo here](http://lucasmreis.github.io/baobabStateApp/). Complete source code can be found [here](https://github.com/lucasmreis/baobabStateApp).
