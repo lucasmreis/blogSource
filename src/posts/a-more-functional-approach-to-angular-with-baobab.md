@@ -2,7 +2,7 @@
 title: A more functional approach to Angular, with Baobab
 lead: Even simpler and more powerful
 template: post.hbt
-date: 2015-03-05
+date: 2015-03-10
 tags: javascript, angular, functional, state
 ---
 

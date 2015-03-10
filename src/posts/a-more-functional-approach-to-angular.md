@@ -147,3 +147,5 @@ One feature I would love to see implemented: whenever a big problem happens, an 
 
 Here's the [working demo](https://github.com/lucasmreis/simpleStateApp).
 
+**UPDATE 2015-03-10**: I illustrate again this idea in the [next post](), this time using the Baobab library. Check it out, it even has *undo*! :)
+
