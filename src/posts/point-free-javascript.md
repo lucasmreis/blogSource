@@ -93,20 +93,16 @@ var getAdminEmails = compose(
     propEq('admin')('role')));
 ```
 
-What is most amazing about this version is that it is *entirely composed of other smaller, generic and reusable functions*! These functions not only will help you with your next functions, but they will help you understanding quicker *any* function. After you know what `prop` does, it's faster to understand `prop('something')` than `obj => obj.something`, and we didn't go into the "stress" of having to choose a name for the temporary `obj` variable! :)
+That is what is called *point-free programming*, or *tacit programming*. What is most amazing about this version is that it is *entirely composed of other smaller, generic and reusable functions*! These functions not only will help you with your next functions, but they will help you understanding quicker *any* function. After you know what `prop` does, it's faster to understand `prop('something')` than `obj => obj.something`, and we didn't go into the "stress" of having to choose a name for the temporary `obj` variable! :)
 
-## Enter Ramda
-
-Most of these smaller functions are generic and useful enough so that we could use them in almost every project.
-
-RAMDA
+Note: most of these smaller functions are generic and useful enough so that we could use them in almost every project. [Ramda](http://ramdajs.com/) is a library that has exactly that: a bunch of really small and generic functions.
 
 ## Another Example
 
-I'll finish with another common situation. This is a rather common function:
+I'll finish with another common situation:
 
 ```js
-function calculateTotalPromotions = cart =>
+var calculateTotalPromotions = cart =>
   getPromotions(cart.products[0])
     .then(calculateTotal);
 ```
@@ -118,6 +114,17 @@ We can understand it quickly because of familiarity, but the code flow is all ov
 var calculateTotalPromotions = composeP(
   calculateTotal,
   getPromotions,
-  head,
+  head, // head returns first element
   prop('products'));
 ```
+
+Much simpler! :)
+
+## Conclusions
+
+Pointfree programming is all about modularizing functions through composition. You use smaller more generic functions
+
+Inside a `compose` or `composeP`, one function is called, then the other, and that's how it goes, no matter if the function has 17 lines or 3. It works the same way, and code complexity does not goes up.
+
+We don't have to worry about temporary variables, which makes it easier to understand code and harder to introduce bugs. Also, it's easier to understand and test smaller parts of the code, which makes it more reliable.
+
