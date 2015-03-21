@@ -130,6 +130,13 @@ Pointfree programming is all about modularizing functions through composition. Y
 
 We also don't have to worry about temporary variables, which makes it easier to understand code and harder to introduce bugs. Also, it's easier to understand and test smaller parts of the code, which makes it more reliable.
 
-Of course it's not a silver bullet, and a lot of times I end up with a function that is not fully pointfree. It main weakness I find is when the function has more than one parameter; almost everytime it leads to having some non pointfree code. But, that said, my personal experience is that the pointfree part of the code is much more robust and they scream the errors earlier in the development phase. The bugs are almost never there! :)
+Of course it's not a silver bullet, and a lot of times I end up with a function that is not fully pointfree. I find its main weakness occurs when the function has more than one parameter; almost everytime it leads to having some non pointfree code. But, that said, my personal experience is that the pointfree part of the code is much more robust and they scream the errors earlier in the development phase. The bugs are almost never there! :)
+
+## Further Reading
+
+The first place I heard about this programming style was in Frontend Masters [Hardcore Functional Javascript](https://frontendmasters.com/courses/functional-javascript/). It's totally worth the price!
+
+[jsanchesleao](https://jsleao.wordpress.com/) also wrote a nice post about [why you should be using something like ramda in your code](https://jsleao.wordpress.com/2015/02/22/curry-and-compose-why-you-should-be-using-something-like-ramda-in-your-code/).
+
 
 
