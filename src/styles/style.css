@@ -132,6 +132,10 @@ blockquote, q {
   color: rgba(0,0,0,0.55);
 }
 
+img {
+  max-width: 100%;
+}
+
 footer {
   font-family: 'Lato', sans-serif;
   color: rgba(0,0,0,0.3);
