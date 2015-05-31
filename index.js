@@ -53,6 +53,7 @@ function addLink() {
         files[file].link = files[file].title
           .trim()
           .toLowerCase()
+          .replace(/\?/g, '')
           .replace(/,/g, '')
           .replace(/ /g, '-');
       }
