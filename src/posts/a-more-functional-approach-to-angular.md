@@ -1,5 +1,5 @@
 ---
-title: A more functional approach to Angular
+title: A More Functional Approach to Angular
 lead: Keeping sanity while managing state
 template: post.hbt
 date: 2015-02-22

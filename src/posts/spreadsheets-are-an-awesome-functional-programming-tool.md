@@ -1,5 +1,5 @@
 ---
-title: Spreadsheets are an awesome functional programming tool
+title: Spreadsheets Are An Awesome Functional Programming Tool
 lead: And more thoughts on handling application state
 template: post.hbt
 date: 2015-05-02

@@ -1,5 +1,5 @@
 ---
-title: A more functional approach to Angular, with Baobab
+title: A More Functional Approach to Angular, with Baobab
 lead: Even simpler and more powerful
 template: post.hbt
 date: 2015-03-10
