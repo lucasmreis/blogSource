@@ -45,7 +45,7 @@ mori.equals(a, mori.vector(1, 2, 3))
 
 ```
 
-**Question 1.** Are the objects cloned every time I apply a transformation? **No.** And that's a key part of the reason the performance is almost the same as the mutable counterparts. These libraries are implemented so that a transformed object *share as much memory as possible* with the original object. ([more details here]())
+**Question 1.** Are the objects cloned every time I apply a transformation? **No.** And that's a key part of the reason the performance is almost the same as the mutable counterparts. These libraries are implemented so that a transformed object *share as much memory as possible* with the original object. ([more details here](http://hypirion.com/musings/understanding-persistent-vector-pt-1))
 
 **Question 2.** That means that storing transformed versions of objects use little memory? **Yes!** If we have an one million elements conventional array that occupies 1GB of memory, clone it, append an element, and save both versions, we'll use 2GB of memory. If we use an immutable vector and `conj`, storing both versions will not occupy much more than storing only one vectors.
 
