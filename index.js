@@ -4,9 +4,11 @@ var templates   = require('metalsmith-templates');
 var metallic    = require('metalsmith-metallic');
 var permalinks  = require('metalsmith-permalinks');
 var collections = require('metalsmith-collections');
+var drafts      = require('metalsmith-drafts');
 var moment      = require('moment');
 
 Metalsmith(__dirname)
+  .use(drafts())
   .use(metallic())
   .use(formatDate())
   .use(addLink())
