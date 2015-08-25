@@ -7,11 +7,11 @@ draft: false
 tags: javascript, build, npm
 ---
 
-I really like the "build first approach" to development, in which we automate common tasks and simplify workflow as soon as we can. We lose a few minutes setting up the build tool, but save hours with the automation and have quicker feedback for errors and problems. No one argues with that these days.
+I really like the "build first approach" to development, in which we automate common tasks and simplify workflow as quickly as possible. We lose a few minutes setting up the build tool, but save hours with the automation and have quicker feedback for errors and problems. No one argues with that these days.
 
-I read a really good book on the "build first approach" applied to javascript, [Javascript Application Design](http://www.manning.com/bevacqua/), which was published in January 2015. It describes good practices on building javascript applications, and illustrate the task automations with Grunt.
+I read a really good book on the "build first approach" applied to javascript, [Javascript Application Design](http://www.manning.com/bevacqua/), which was published in January 2015. It describes good practices for building javascript applications, and illustrate the task automations with Grunt.
 
-But we know the javascript world, and now, in August 2015, Grunt is old enough to be in a museum. Gulp is the new thing, let's use it! I've worked with both, and I agree that the Gulp approach seems more sensible. But this time I want to talk about a third approach I've come accross: using *NPM itself* as the build tool. I've found that it solves 90% of all the build issues we have, and it's suitable for most projects we'll get involved with.
+But we know the javascript world, and now, in August 2015, Grunt is old enough to be in a museum. "Gulp is the new thing, let's use it!" Well, I've worked with both, and I agree that the Gulp approach seems more sensible. But this time I want to talk about a third approach I've come across: using *NPM itself* as the build tool. I've found that it solves 90% of my project's build issues, and it's suitable for most projects we'll get involved with.
 
 ## Npm Scripts = Tasks
 
@@ -22,7 +22,7 @@ $ npm install -g mocha
 $ mocha --recursive --compilers js:babel/register --reporter spec
 ```
 
-One have to install Mocha globally, and run this complex command everytime one wants to run the tests. If we use npm scripts, that's how we would do it: first, edit the `package.json` file:
+You'll have to install Mocha globally, and run this complex command everytime you want to run the tests. If we use npm scripts, that's how we would do it: first, edit the `package.json` file:
 
 ```javascript
 "scripts": {
@@ -32,11 +32,11 @@ One have to install Mocha globally, and run this complex command everytime one w
 
 And then we use it simply by runnig the command `npm test` in the terminal.
 
-There's a bonus for using the npm scripts: the packages do not have to be installed globally to be used in a script! That means that one only has to install Mocha by running `npm install --save-dev mocha`, and the `npm test` above will run. I find this is really good, since no global installing is needed, and every package used ends up listed in the `package.json`.
+There's a bonus for using the npm scripts: the packages do not have to be installed globally to be used in a script! That means that you only have to install Mocha by running `npm install --save-dev mocha`, and the `npm test` above will run. I find this is really good, since no global installing is needed, and every package used ends up listed in the `package.json`.
 
 ## Organizing The Project
 
-I like to organize my project by having three folders: `src`, `test` and `dist`. The tests are all in `test`, and the source code in `src` gets compiled to `dist`. We already have the `npm test` task registered, let's register the task to compile javascript, using [Browserify](http://browserify.org/):
+I like to organize my project with three folders: `src`, `test` and `dist`. The tests are all in `test`, and the source code in `src` gets compiled to `dist`. We already have the `npm test` task registered, let's register the task to compile javascript, using [Browserify](http://browserify.org/):
 
 ```javascript
 "scripts": {
@@ -52,7 +52,7 @@ $ npm run js
 
 **Important:** the `test` and `start` are "default" scripts, and can be called directly with `npm test` and `npm start`. The other scripts we are going to write need to be called with `npm run`.
 
-One can also call simple commands in scripts. For instance, sometimes we only need to copy files to `dist` folder:
+You can also call simple commands in scripts. For instance, sometimes we only need to copy files to `dist` folder:
 
 ```javascript
 "scripts": {
@@ -61,7 +61,7 @@ One can also call simple commands in scripts. For instance, sometimes we only ne
 }
 ```
 
-One can also run npm scripts inside npm scripts! Let's create a first version of a complete `build` script, using the `js`, `html` and `assets` scripts:
+You can also run npm scripts inside npm scripts! Let's create a first version of a complete `build` script, using the `js`, `html` and `assets` scripts:
 
 ```javascript
 "scripts": {
@@ -121,9 +121,9 @@ And there we have it: watching and compiling all the files, in parallel.
 
 I personally like the approach of developing small building blocks, and I enjoy the fact that each script is a terminal command. I found these characteristics make npm scripts direct, easy and simple.
 
-These commands alse are definitely more perennial than Grunt and Gulp programming style. This makes npm builds mre robust to technology changes than these two frameworks.
+These commands alse are definitely more perennial than Grunt and Gulp programming style. This makes npm builds mre robust to technology changes than the other two frameworks.
 
-Even if one does not use it to build, npm scripts can make our job easier when dealing with complex terminal commands. In our example, if we want to deploy our application to Github Pages, we need to push the `dist` directory as a root to the `gh-pages` branch. It's a complex git command, and we can automate it this way:
+Even if you do not use it to build, npm scripts can make our job easier when dealing with complex terminal commands. In our example, if we want to deploy our application to Github Pages, we need to push the `dist` directory as a root to the `gh-pages` branch. It's a complex git command, and we can automate it this way:
 
 ```javascript
 "scripts": {
