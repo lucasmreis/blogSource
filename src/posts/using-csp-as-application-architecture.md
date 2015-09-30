@@ -2,7 +2,7 @@
 title: Using CSP As Application Architecture 
 lead: Process based client-side web applications
 template: post.hbt
-date: 2015-09-25
+date: 2015-09-29
 tags: javascript, csp, process, architecture, state
 draft: true
 ---
