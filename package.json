@@ -31,6 +31,7 @@
     "metalsmith-markdown": "^0.2.1",
     "metalsmith-metallic": "^0.3.1",
     "metalsmith-permalinks": "^0.4.0",
+    "metalsmith-rss": "^1.0.0",
     "metalsmith-templates": "^0.6.0",
     "moment": "^2.9.0"
   }

@@ -2,26 +2,26 @@
 title: Using CSP As Application Architecture 
 lead: Process based client-side web applications
 template: post.hbt
-date: 2015-09-29
+date: 2015-10-03
 tags: javascript, csp, process, architecture, state
-draft: true
+draft: false
 ---
 
-Intro: Clojure, Go... CSP. Quiescent Todomvc
+Since I started studying and working on a Clojure project, I've been using the `core.async` library. It's a really simple and powerful way of dealing with concurrency, which is also used in the Go language. It's an implementation of [Communicating Sequential Processes](https://en.wikipedia.org/wiki/Communicating_sequential_processes), and now with ES6 generators we can use it in Javascript too! In this post, I'll be using [js-csp](https://github.com/ubolonton/js-csp).  Check out my [Introduction to CSP in Javascript](../quick-introduction-to-csp-in-javascript/) - it can be considered "Part 1" of this post.
 
-Intro to CSP?
+When I came across [Quiescent's](https://github.com/levand/quiescent) [TodoMVC implementation](https://github.com/levand/todomvc/tree/gh-pages/architecture-examples/quiescent), I saw the power of CSP as a front end application framework *itself*. This post describes an expanded version of the architecture of that TodoMVC app.
 
 ## The Architecture
 
 The application has an object called **state**. The state holds the information needed to render the screen. 
 
-There's a **render process**, that triggers a React render (or whatever view framework you want to use) whenever a new state object is put in the **render channel**.
+There's a **render process**, that triggers a React render (or whatever view framework you want to use) whenever a new state object is put into the **render channel**.
 
-There are **update processes**, that transform state according to the data put in the **update channels**. After transforming the state, the update process put the new state in the render channel.
+There are **update processes**, that transform state according to the data put into the **update channels**. After transforming the state, the update processes put the new state in the render channel.
 
 There are **complex actions processes**, that are asynchronous processes that can trigger multiple update processes. It usually involves communication with the server, or any action that takes time to complete.
 
-That's it, those are the basic processes in the framework. One could also run more processes, like a router or websocket process, but let's start with the basic ones.
+It's that simple. Those are the basic processes in the framework. Of course, it is possible to run more processes, like a router or websocket process, but let's start with the basic ones.
 
 ## Application Config
 
@@ -76,11 +76,11 @@ The config object has the `state`, the render channel `renderCh`, and the `updat
 
 The `start` function loads the config, and will start all the processes. I like to put the loaded app in the `window` object, so I can play with it in the browser console, very much like Clojure's command line.
 
-Get your build flow running (I like to use [npm as a build tool](http://lucasmreis.github.io/blog/npm-is-an-amazing-build-tool/) for that) and let's dive into the update processes.
+Get your build flow running (I like to use [npm as a build tool](../npm-is-an-amazing-build-tool/)) and let's dive into the update processes.
 
 ## Updates
 
-Let's pick one functionality in our app: adding a new word to the `state.words` list. First, let's implement the function that receives the old state, the word to add, and returns the new state with the word added:
+Let's pick one functionality in our app: adding a new word to the `state.words` list. First, let's implement the function that receives the old state and the word to add, and then returns the new state with the word added:
 
 ```js
 // updates.js
@@ -99,7 +99,7 @@ export const loading = (state, loadingState) =>
   assoc(state, 'loading', loadingState);
 ```
 
-Every update function will receive two parameters: the state, and the data used in the transformation, and returns a new state. Since it's a pure function, it's super simple to unit test!
+Every update function will receive two parameters: the state and the data used in the transformation.  Then it will return a new state. Since it's a pure function, *it's very simple to unit test*.
 
 Now let's write a function to initiate a process that takes data from the `updates.channels.loading` channel, and transforms `state`:
 
@@ -159,7 +159,7 @@ Let's test it in the browser. Write in the console:
 
 It works! :)
 
-But we'll have many update processes. In our application we have three: `view`, `add` and `loading`. The first changes the word being shown in the screen (by changing `state.current`), and the second adds a new word. First, the functions:
+But we'll have many update processes. In this application we have three: `view`, `add` and `loading`. The first changes the word being shown in the screen (by changing `state.current`), and the second adds a new word. First, the functions:
 
 ```js
 // update.js
@@ -209,13 +209,13 @@ const start = () => {
 };
 ```
 
-In the console, use `csp.putAsync` to put data in the channels and check the transformations being done in `app.state`!
+In the console, use `csp.putAsync` to put data into channels and check the transformations being done in `app.state`!
 
 ## Complex Actions
 
-Sometimes one action cannot be translated in a simple update function. Take, for example, an action that inserts data in a db through a web server. It will set loading to true, make the request, update the state, and set loading to false. 
+Sometimes one action cannot be translated in a simple update function. Take, for example, an action that inserts data into a db through a web server. It will set loading to true, make the request, update the state, and set loading to false. 
 
-These are what I'm calling complex actions: functions that call more than one update in a period of time. They also receive two parameters: the update channels object, and the data required for the action.
+These are what I'm calling *complex actions*: functions that call more than one update over a period of time. They also receive two parameters: the update channels and the data required for the action.
 
 For instance, let's think of the complex action that changes the nickname of person with a given person ID:
 
@@ -248,7 +248,7 @@ export const dbInsert = (updateChannels, newWord) => {
 
 It's not as simple to unit test a complex action, but it's not complicated either. You just create the update channels and check the values passed to them. 
 
-And now the `initComplexActions`, which is very similar to `initUpdates`:
+And now let's take a look at the `initComplexActions`, which is very similar to `initUpdates`:
 
 ```js
 const initComplexActions = app => {
@@ -292,11 +292,11 @@ And that's exactly what we wanted.
 
 ## Rendering
 
-Rendering process works like this:
+Rendering process works as follows:
 
 1. When a state is received in the `app.renderCh` channel, it triggers the rendering function. In our case it will be React, but it could be any other view framework.
 2. The process will be "busy" until the next animation frame. That means it will not trigger the rendering function if a new state is received and rendering is taking place.
-3. If a new state is put in the channel, and there's already a state there waiting to be rendered, the older state will be discarded, and only the new state will be rendered. 
+3. If a new state is put in the channel, and there's already a state waiting to be rendered, the older state will be discarded, and only the new state will be rendered. 
 
 Let's start with number 3. That logic is ready for us in the `js-csp` library (and in `core async` too). Change the definition of `app.renderCh` to:
 
@@ -304,7 +304,7 @@ Let's start with number 3. That logic is ready for us in the `js-csp` library (a
   renderCh: chan(buffers.sliding(1))
 ```
 
-That means that the channel will hold 1 value at a time. And, if another value is put in the channel, the last one will be discarded and the new value will be available. This is the *sliding strategy*.
+This means that the channel will hold 1 value at a time, and, if another value is put in the channel, the last one will be discarded and the new value will be available. This is the *sliding strategy*.
 
 Now, to the render process:
 
@@ -344,13 +344,13 @@ const initRender = (app, element) => {
 };
 ```
 
-The first thing the process does is getting a value from the render channel. Then, the `finishRender` channel is created. This is a trick so the process wait for the `React.render` and `window.requestAnimationFrame` functions to continue.
+The first thing the process does is to take a value from the render channel. Then, the `finishRender` channel is created. This is a trick so the process wait for the `React.render` and `window.requestAnimationFrame` functions to continue.
 
 Both functions are async, and don't block the main thread when called. That means that right after `React.render` is called, the expression `yield take(finishRender);` will be evaluated. That way the process will be paused until any value is put in the `finishRender` channel.
 
-`React.render` accepts a callback, and I'm calling `window.requestAnimationFrame`. This function waits for the next browser rendering frame and calls another callback.
+`React.render` accepts a callback, and then calls `window.requestAnimationFrame`. This function waits for the next browser rendering frame and calls another callback.
 
-So, what is happening here is: whenever the render is started, it waits for the next animation frame to get a new state to render. This way we make sure no unnecessary renders are triggered! Cool, isn't it?
+Whenever the render is started, it waits for the next animation frame to get a new state to render. This way we make sure no unnecessary renders are triggered! Cool, isn't it?
 
 A little modification is needed in the `initUpdates` process: the new state should be put in the render channel:
 
@@ -361,7 +361,7 @@ yield put(app.renderCh, app.state);
 // ...
 ```
 
-We start it by calling it in the `start` function:
+We start `initRender` by calling it in the `start` function:
 
 ```js
 const start = () => {
@@ -387,11 +387,11 @@ The code for the final application can be seen [here](https://github.com/lucasmr
 
 ## Conclusion
 
-CSP is a simple, really powerful and time-tested way of dealing with asynchronous programming. Using it as an application framework was very rewarding. The architecture is very robust, and seems to scale well. I'm certainly going to use it in other projects, and I encourage everyone to try it!
+CSP is a simple, powerful and time-tested way of dealing with asynchronous programming. Using it as an application framework is very rewarding. The architecture is robust, and seems to scale well. I'm certainly going to use it in other projects, and I encourage everyone to try it!
 
 ## Next Steps
 
-I want to battle test it in a bigger project, to really get a sense of how it will behave. 
+I'd like to battle test the framework within a bigger project, to really get a sense of how it will behave. 
 
 Most client-side application demands could be translated as an update or complex action, at least the ones triggered by the user. But some could be implemented as ever running processes, initiated in the `start` function. For instance, a simple router could be written as:
 
@@ -412,12 +412,9 @@ const initHistory = app => {
 }
 ```
 
-I also would like to experiment this way with web sockets.
+I would also like to experiment this way with web sockets.
 
 If any of you want to exchange some ideas about using CSP as a framework with javascript, or any other flavor of front end programming, feel free to email me at [lucasmreis@gmail.com](mailto:lucasmreis@gmail.com).
-
-
-
 
 
 

@@ -5,6 +5,7 @@ var metallic    = require('metalsmith-metallic');
 var permalinks  = require('metalsmith-permalinks');
 var collections = require('metalsmith-collections');
 var drafts      = require('metalsmith-drafts');
+var rss         = require('metalsmith-rss');
 var moment      = require('moment');
 
 Metalsmith(__dirname)
@@ -18,6 +19,17 @@ Metalsmith(__dirname)
       sortBy: 'date',
       reverse: true
     }
+  }))
+  .use(rss({
+    feedOptions: {
+      title: 'Lucas Reis\' Blog',
+      site_url: 'http://lucasmreis.github.io/blog/',
+      feed_url: 'http://lucasmreis.github.io/blog/rss.xml',
+      description: 'In this blog, I\'ll write about some of the things that I have found useful and helpful to my programming.',
+      managingEditor: 'Lucas Reis',
+      webMaster: 'Lucas Reis',
+      language: 'English'
+    },
   }))
   .use(markdown())
   .use(templates('handlebars'))

@@ -4,14 +4,14 @@ lead: Communicating Sequential Processes In Seven Small Examples
 template: post.hbt
 date: 2015-09-25
 tags: javascript, csp, process, architecture, state
-draft: true
+draft: false
 ---
 
 *What is CSP?* In practice, it's a way of writing concurrent code. The language Go uses it natively, Clojure has core.async which achieves it by using macros, and now we can use it in Javascript because of generators, which were included in ES6.
 
 *Why should I bother?* Because it's very powerful, efficient and simple. What more do you want? :)
 
-*Ok, let's do it. How do I start using it?* We are going to use [js-csp](https://github.com/ubolonton/js-csp). We are going to need generators, which are only included in ES6. That means you'll be able to do it by using Node 4 or superior, or by transpiling your browser code with [babel](https://babeljs.io/) (or any other transpiling tool that supports generators).
+*Ok, let's do it. How do I start using it?* We will use [js-csp](https://github.com/ubolonton/js-csp), and we will need need generators, which are only included in ES6.  That means you'll have to use Node 4 or superior, or transpile your browser code with [babel](https://babeljs.io/) (or any other transpile tool that supports generators).
 
 Enough talking, let's go to the examples!
 
@@ -55,7 +55,7 @@ console.log('something!');
 
 ## Example 3: Processes Wait For Values In Channels
 
-The channels are the second and last concept we're gonna learn. They are queues, and whenever a process `take` from a channel, it pauses until a value is `put` in it. 
+The channels are the second and last concept we're gonna learn. They are queues, and whenever process calls `take` on a channel, it pauses until a value is `put` into that channel. 
 
 ```js
 import {go, chan, take, putAsync} from 'js-csp';
@@ -131,9 +131,9 @@ go(function* () {
 
 ## Example 5: Channel Are Queues
 
-And that means that when a process takes from a channel, the value will not be available for other processes to take. One puts, one takes. 
+Because channels are queues, when a process takes from a channel, the value will not be available for other processes to take. One process puts, one process takes. 
 
-In the example below you can check that the second process will never print `B > RECEIVED: dog`, because the value was already 
+In the example below you can check that the second process will never print `B > RECEIVED: dog`, because the value was already taken by the first process.
 
 ```js
 import {go, chan, take, put} from 'js-csp';
@@ -164,7 +164,7 @@ go(function* () {
 
 ## Example 6: Buffered Channels Don't Block On Put
 
-A channel can be buffered, and that means that, for a given number of puts, a `put` will not make the process pause. 
+A channel can be buffered, which means that, for a given number of puts, a `put` will not make the process pause. 
 
 In the next example, even though no one called `take`, the first two puts will not block the process. But the channel has a buffer of size 2, so the third put will block the process, until someone takes from it.
 
@@ -190,9 +190,9 @@ go(function* () {
 
 Apart from the fixed buffer, which blocks after N puts, we have the dropping and sliding buffers too.
 
-The dropping buffer can hold up to N values. Any more values that are put in a dropping buffer will be discarded.
+The dropping buffer can hold up to N values. Any additional values that are put into a dropping buffer will be discarded.
 
-The sliding buffer can also hold up to N values. Differently, when a new value is put in the sliding buffer, the first value put is dropped, and the buffer holds the new value.
+The sliding buffer can also hold up to N values. But, as opposed to the dropping buffer, when a new value is put into the sliding buffer, the first value put is dropped, and the buffer holds the new value.
 
 In the example below, `value B` and `value C` get dropped in the dropping channel, because it was holding `value A`. On the second process, as soon as `value B` is put in the channel, `value A` is dropped. And as soon as `value C` is put in the channel, `value B` is dropped.
 
@@ -224,9 +224,11 @@ go(function* () {
 
 ## Conclusion
 
+After using CSP for a while, coding asynchronous code with callback or promises seems jurassic. I'm hopeful that with ES6 generators, CSP will become the standard in Javascript, as it is with Go and is starting to be with Clojure.
+
 ## Next Steps
 
-Next blog post! CSP as a framework!
+Two other models also seem very interesting, and they could be considered more high level than CSP: *Functional Reactive Programming* and *Actors*, as they are used in Reactive Extensions and Erlang, respectively. I will definetely cover these these in future blog posts.
 
-
+I also believe that CSP could be an amazing *front end framework*.  To read more, check out my blog post [*Using CSP as Application Architecture*](../using-csp-as-application-architecture/).
 
