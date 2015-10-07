@@ -20,6 +20,7 @@ Metalsmith(__dirname)
       reverse: true
     }
   }))
+  .use(markdown())
   .use(rss({
     feedOptions: {
       title: 'Lucas Reis\' Blog',
@@ -31,7 +32,6 @@ Metalsmith(__dirname)
       language: 'English'
     },
   }))
-  .use(markdown())
   .use(templates('handlebars'))
   .use(permalinks({
       pattern: ':title'
