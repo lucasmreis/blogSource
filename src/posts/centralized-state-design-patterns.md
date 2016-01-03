@@ -44,6 +44,8 @@ This pattern is used by the [Quiescent](https://github.com/levand/quiescent) fra
 
 The application state resides in a simple data structure, usually a javascript object. The whole UI is a function that accepts this state object as a parameter and render it. The developer calls the function "manually"; in other words, the UI does *not* react to changes in the application state.
 
+### --- PICTURE ---
+
 **PROS:**
 
 --- PROPS-BASED COMPONENTS ---
@@ -54,3 +56,14 @@ The application state resides in a simple data structure, usually a javascript o
 --- TOP COMPONENT HAS TO HAVE EVERY DATA / CALLBACKS FOR CHILD COMPONENTS ---
 --- IF RENDE IS NOT TRIGGERED, VIEW CAN BE OUT OF SYNC WITH APP STATE ---
 
+## Conclusions
+
+First question is: which one is better? From my personal experience, the *Update Listeners* pattern really saved our lives once :) We had a big Angular application, with state distributed all over the code, and every new feature added a lot of complexity to it. Now it's much simpler and easier to both add new features and debug the code.
+
+On the other hand, we're thinking of rewriting/refactoring four other applications. React is being considered as the view framework, and we want components to be as shareable as it gets. So, all the components receive data and callbacks as props, and make no assumptions on how the application is handling state. For this situation, the *Manual Render* seems like a better approach.
+
+It's the usual but true conclusion: both design patterns have strengths and weaknesses, and each will work well depending on the situation.
+
+## Last Thoughts
+
+This categorization is a work in progress. Has any of you seen centralized state being used in a different way? Or has any of you have any other "pros" and "cons" you would like to share? Any disagreement with the "pros" and "cons" listed here? I would love to hear from you! :)
