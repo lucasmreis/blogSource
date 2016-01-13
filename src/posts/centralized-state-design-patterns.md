@@ -2,7 +2,7 @@
 title: Centralized State Design Patterns
 lead: Modern Front End Programming
 template: post.hbt
-date: 2016-01-01
+date: 2016-01-13
 tags: javascript, design-pattern, state, React
 ---
 
