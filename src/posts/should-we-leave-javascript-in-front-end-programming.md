@@ -11,7 +11,7 @@ I "inherited" a javascript project at work. It was "just a medium-sized React ap
 
 But no, it was not easy. A couple of hours until the build works, a couple of days until I can make any production-ready change. The difficulties I encountered in the process made me think a little bit about technology choice in programming.
 
-The main question that I thought I knew the answer is: *should we implement the next front end project in javascript?*
+The main question that I *thought* I knew the answer is: *should we implement the next front end project in javascript?*
 
 ## The Previous Answer
 
@@ -21,7 +21,40 @@ And that's what seems to have changed in web front end programming.
 
 ## Javascript Is Not One Language Anymore
 
-<< Explain the differences >>
+First of all, let me explain what I mean by "Javascript is not one language anymore". I work at a really big front end project that still uses ES5 for most of the code, and Angular 1.x as the framework. It uses Ramda as the main util library. A common piece of code would be like that:
+
+```js
+var onSubmit = composeP(
+  catchP(EventService.dispatch('cart:load-error')),
+  EventService.dispatch('cart:load'),
+  BasketStateService.change('cart'),
+  prop('data'),
+  $http,
+  CartApiService.requestObj);
+```
+
+That's a good ES5 / Ramda / Angular piece of code.
+
+But that piece of code written today could look like:
+
+```js
+const onSubmit = async id => {
+  const cartReq = CartApiService.requestObj(id)
+  try {
+    const { data } = await axios(cartReq)
+    BasketStateService.change('cart', data)
+    EventService.dispatch('cart:load', data)
+  } catch (err) {
+    EventService.dispatch('cart:load-error', err)
+  }
+}
+```
+
+Which is also a good ES7 piece of code. And it's completely different, in a lot of aspects.
+
+Some examples of differences in Javascript code: ES5 callbacks are very different from ES6 promises that are very different from ES7 async functions. "For" loops are very different from Lodash code, that is different from Ramda or Trine code too. Mutable objects, ImmutableJS, ES7 object spread operator... The list goes on.
+
+So, no two projects I've ever encountered were like any other in those terms. It's always a combination of them, and this impose a cost on learning how to 
 
 ## New Technologies Are Better
 
@@ -43,4 +76,4 @@ One more time: should we implement the next front end project in javascript?
 
 **A not very sure yes.** And I think with little time it will be a "no".
 
-<< React Native, WebAssembly, Elixir + Elm, Clojure + ClojureScript >> 
+<< React Native, WebAssembly, Elixir + Elm, Clojure + ClojureScript >>
