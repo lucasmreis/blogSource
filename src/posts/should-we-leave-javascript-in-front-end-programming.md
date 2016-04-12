@@ -74,27 +74,29 @@ The way this question should *always* be answered is by a opportunity cost analy
 
 We need to understand our application needs. Does it deal with a lot of async work? Is it heavy on user interaction? Does it need to run on very different platforms?
 
-**2. What are the tools that help me with those problems better than plain old javascript?**
+**2. What are the tools that help me with those problems better than the most up-to-date javascript?**
 
 The next step is trying to find solutions to these problems, and tools that implement those solutions. Powerful type systems, flexible async patterns, performant rendering, these are all important solutions that should be considered. Make a list of languages / tools that could help with those.
 
-**3. What are the costs of using these tools in relation to use plain old javascript?**
+**3. What are the costs of using these tools in relation to use the most up-to-date javascript?**
 
 What is the learning curve? How active is the community? Does it have a big ecosystem? How about native javascript interop?
 
 The answers to these questions define how costly the adoption of technology will be. An example: although ClojureScript has a decent sized community and ecosystem, these are nothing compared to what we have in javascript. So there's an opportunity cost in choosing this tool.
 
-And that's where the opportunity cost analysis enter: we have to weigh the benefits, and see if they outweigh the costs in relation to js.
+And that's where the opportunity cost analysis enter: we have to weigh the benefits, and see if they outweigh the costs in relation to using javascript.
 
-Sometimes we would prefer small changes - like start using ES7 or TypeScript. That can bring our project to a better level. But sometimes small changes can only bring us so far, and a bigger learning curve cost of, let's say, refactoring to Elm, can lead to so much improvement to the final code that's worth the time investment.
+Sometimes we would prefer small changes - like start using TypeScript. Considering that we'll have a "transpiling" build phase already, changing from Babel to TypeScript compiler is a small cost. And that can bring our project to a higher level.
 
-With this in mind, is now clear that we should always use javascript for a web front end project?
+But sometimes small changes can only bring us so far, and a bigger learning curve cost of, let's say, refactoring to Elm, can lead to so much improvement to the final code that the time invested is worth it.
+
+With this in mind, is it still the case that we should always use javascript for a web front end project?
 
 ## The New Answer
 
 **A not very sure yes.** And I think with little time it will be a "no". :)
 
-Today, even though this is changing, javascript is still the "simplest to start doing something" tool. We all have browsers that can understand javascript, and they have awesome debugging tools. Adding a build tool and using Babel is still simpler than most front end language development workflows.
+Today (even though this is changing) javascript is still the "simplest to start doing something" tool. We all have browsers that can understand javascript, and they have awesome debugging tools. Adding a build tool and using Babel is still simpler than most front end language development workflows.
 
 An important observation: if we want to develop for mobile, React Native is the best "non-native" choice. So it makes sense that, if we want to reuse code or even knowledge in mobile projects, javascript is the chosen tool.
 
