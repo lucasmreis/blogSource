@@ -126,11 +126,18 @@ type alias Card = (Value, Suit)
 printCard : Card -> String
 printCard (value, suit) =
   [printValue value, " of ", printSuit suit] |> String.concat
+
+  main =
+    (Num 10, Spade)
+      |> printCard
+      |> text
+
+-- Ten of Spade
 ```
 
 So, if I have a valid card, I can print it. Nice. Now let's parse the original abbreviation string.
 
-## Parsing a String
+## Parsing a Suit and a Value From A String
 
 First I'll parse the suit. My first take is:
 
@@ -169,3 +176,316 @@ The recommendations about wildcard patterns and `Debug.crash` are important!
 Oh my god, now that's an error message! First of all, the subject of the error is already amazing: I said the function receives a Char as a parameter, and I did not handle all the Char cases. That means the compiler is preventing me from having code that behaves unexpectedly. What would be the return value if an `'X'` was passed? That case needs to be handled.
 
 But, better than that, I really like how *didatic* was the message. Not only it gives some tips, it gives a link to a page teaching about the subject! I've read that [Evan Czaplicki](https://twitter.com/czaplic?lang=en), the language designer, is working hard on making the error messages better. Good job!
+
+By reading that link, I learned that the best way to deal with this in this case is by using a Maybe type. Maybe is native to Elm, and represented by:
+
+```elm-lang
+type Maybe a
+    = Just a
+    | Nothing
+```
+
+Maybe represents a value that may or may not exist. So I'll make the assumption that if the Char inputted by the user is not one of the four, the Suit will not exist and will be represented by a Nothing:
+
+```elm-lang
+parseSuit : Char -> Maybe Suit
+parseSuit s =
+  case s of
+    'C' -> Just Club
+    'D' -> Just Diamond
+    'S' -> Just Spade
+    'H' -> Just Heart
+    _ -> Nothing
+
+main =
+  'C'
+    |> parseSuit
+    |> toString
+    |> text
+
+-- Just Club
+```
+
+The best part of using a maybe is that the functions that will deal with the value returned by the parsers *will have to deal with the fact that they may not exist*. This will be enforced by the compiler, and is one way of making sure we have to explicitly deal with errors or unexpected behaviors in the code. I'll talk more about that later. Let's now write the Value parser.
+
+A simple implementation would be:
+
+```elm-lang
+parseValue : String -> Maybe Value
+parseValue v =
+  case v of
+    "J" ->
+      Just Jack
+
+    "Q" ->
+      Just Queen
+
+    "K" ->
+      Just King
+
+    "A" ->
+      Just Ace
+
+    _ ->
+      String.toInt v
+```
+
+But the compiler screams that `String.toInt` does not return a Maybe Value. It returns a Result String Int which is described by `type Result error value = Ok value | Err error`. Let's extract this case to a different function so we can manage better `toInt`:
+
+```elm-lang
+parseNumValue : String -> Maybe Value
+parseNumValue v =
+  case String.toInt v of
+    Ok num ->
+      if (num >= 2 && num <= 10) then
+        Just (Num num)
+      else
+        Nothing
+
+    Err _ ->
+      Nothing
+
+
+parseValue : String -> Maybe Value
+parseValue v =
+  case v of
+    "J" ->
+      Just Jack
+
+    "Q" ->
+      Just Queen
+
+    "K" ->
+      Just King
+
+    "A" ->
+      Just Ace
+
+    _ ->
+      parseNumValue v
+
+main =
+  "10"
+    |> parseValue
+    |> toString
+    |> text
+
+-- Just (Num 10)
+```
+
+This is one of the most interesting parts of this code we are writing. `parseNumValue` is the function that *guarantees* that a card will have a minimum value of 2 and a maximum of 10. This together with wrapping it in a Maybe, and using the Card type, is a guarantee that, whenever I have a Card variable, it's going to be a valid Card. There's no way to represent an invalid card, or to process an invalid card at some point of the code.
+
+Now we can parse a Value and a Suit. The next step is parsing the whole abbreviation, like `"10H"` or `"KS"`.
+
+## Parsing An Abbreviation String
+
+We need to separate the abbreviation string into a value string and a suit character. Now this is a fun function:
+
+```elm-lang
+divideCardString : String -> (Maybe String, Maybe Char)
+divideCardString str =
+  let
+    chars = String.toList str
+
+    suit = chars
+      |> List.reverse
+      |> List.head
+
+    value = chars
+      |> List.reverse
+      |> List.tail
+      |> Maybe.map List.reverse
+      |> Maybe.map String.fromList
+
+  in
+    (value, suit)
+
+main =
+  "AH"
+    |> divideCardString
+    |> toString
+    |> text
+
+-- (Just "A", Just 'H')
+```   
+
+Let's break it into parts. First, there's the `let` keyword. It is used to compute temporary variables that will be returned after the `in` keyword.
+
+The first variable is `chars`. It's the List representation of the input string. It's inferred as a List of Char.
+
+To compute the next variables, I did not choose the most efficient way, and that can be a "homework" for the reader :) `suit` is the head of the reverse of the list; in other words, it's the last Char. Note that `List.head` returns a Maybe, because the list may be empty!
+
+`value` is the rest of the string. It's the tail of the reverse of the list, reversed again, and transformed in a String again. That's definitely not performant, but fun :) `List.tail` returns a Maybe List, so, to apply `List.reverse` and `String.formList`, I had to use `Maybe.map`. Maybe.map is the way to apply a function to the value inside a Maybe.
+
+Now the function that takes this tuple and returns a Maybe Card:
+
+```elm-lang
+parseCardTuple : (Maybe String, Maybe Char) -> Maybe Card
+parseCardTuple (value, suit) =
+  case (value `Maybe.andThen` parseValue, suit `Maybe.andThen` parseSuit) of
+    (Just v, Just s) ->
+      Just (v, s)
+
+    _ ->
+      Nothing
+
+main =
+  (Just "7", Just 'D')
+    |> parseCardTuple
+    |> toString
+    |> text
+
+-- Just ((Num 7,Diamond))
+```
+
+`Maybe.andThen` is used when using `Maybe.map` returns a Maybe of a Maybe. `andThen` is for Maybes what `flatten` is for Arrays :)
+
+The nice part of this function is that we called functions inside the `case of` syntax. So, if both parses are successful, I'll return a Just Card. If anything goes wrong, be it that there was no String to begin with, or one of the parses returned Nothing, our function itself returns Nothing.
+
+Now our algorithm is ready! Let's glue all the parts.
+
+## The Final function
+
+The final function is just a composition of the ones we just built:
+
+```elm-lang
+spellCard : String -> String
+spellCard str =
+  str
+    |> divideCardString
+    |> parseCardTuple
+    |> printCard
+```
+
+It does not compile. The compiler tells us that `parseCardTuple` returns a Maybe Card, and `printCard` was expecting a Card. We already know how to solve it, we just change it to `Maybe.map printCard`. The problem is that the function would still return a Maybe String, and we want to extract a String from it.
+
+The `Maybe` module has a function for that: `Maybe.withDefault`. It accepts a default value and a Maybe. If the Maybe is a Just, it returns the value inside the Just. If it's a Nothing, it returns the default value. Here is the official implementation of [`Maybe.withDefault`](https://github.com/elm-lang/core/blob/master/src/Maybe.elm#L51):
+
+```elm-lang
+withDefault : a -> Maybe a -> a
+withDefault default maybe =
+    case maybe of
+      Just value -> value
+      Nothing -> default
+```
+
+Using it, our final function is described as:
+
+```elm-lang
+spellCard : String -> String
+spellCard str =
+  str
+    |> divideCardString
+    |> parseCardTuple
+    |> Maybe.map printCard
+    |> Maybe.withDefault "-- unknown card --"
+
+
+main =
+  "AH"
+    |> spellCard
+    |> text
+
+-- Ace of Heart
+```
+
+It's done!
+
+## But Specs Change...
+
+And we have to deal with it. One of the promises of strong type systems is that they make the code much easier and safer to change / refactor. I work daily with a big Javascript application, and I think that's one of the most painful points now. Changing any part of the code requires a lot of attention, and a lot of faith in the tests. Just changing a function is never the answer, and we have to be extra careful with not inserting "hidden bugs" by creating new unexpected cases.
+
+Let's suppose we want to include the Joker card:
+
+```
+"J"  -> "Joker"
+```
+
+The first thing I notice is that our model is not sufficient anymore. A card is not a tuple of value and suit; now we also have a joker. I'm gonna change the `Card` type, and run the compiler to see what it says:
+
+```elm-lang
+type Card = OrdinaryCard Value Suit | Joker
+```
+
+The compiler complains that `printCard` does not print a Card, it prints a tuple. Let's change it:
+
+```elm-lang
+printCard : Card -> String
+printCard card =
+  case card of
+    OrdinaryCard value suit ->
+      [printValue value, " of ", printSuit suit] |> String.concat
+
+    Joker ->
+      "Joker"
+```
+
+The other error the compiler caught was that `parseCardTuple` does not return a Card. Now it's time to pause a little and think about the parsers.
+
+The Joker abbreviation is only a `"J"`, so it does not make sense to call `divideCardString` with it! If I have a `"J"`, I should return a Just Joker. To do that, I'm gonna implement a new function:
+
+```elm-lang
+parseCardString : String -> Maybe Card
+parseCardString str =
+  case str of
+    "J" ->
+      Just Joker
+
+    _ ->
+      str
+        |> divideCardString
+        |> parseCardTuple
+```
+
+It handles the case `"J"` separately, and calls our previous function if it's not a Joker. Now we only have to change `parseCardTuple` to return an OrdinaryCard instead of the tuple in case of success:
+
+```elm-lang
+parseCardTuple : (Maybe String, Maybe Char) -> Maybe Card
+parseCardTuple (value, suit) =
+  case (value `Maybe.andThen` parseValue, suit `Maybe.andThen` parseSuit) of
+    (Just v, Just s) ->
+      Just (OrdinaryCard v s) -- not a tuple
+
+    _ ->
+      Nothing
+```
+
+And change `spellCard`:
+
+```elm-lang
+spellCard : String -> String
+spellCard str =
+  str
+    |> parseCardString
+    |> Maybe.map printCard
+    |> Maybe.withDefault "-- unknown card --"
+
+main =
+  "J"
+    |> spellCard
+    |> text
+
+-- Joker
+```
+
+That was very easy, and I really liked the compiler help.
+
+## First Impressions Of Elm
+
+It's a simple algorithm, and it's just a pure function. I still can't tell if a big web application Elm codebase will feel the same way, so let's all take these conclusions with a grain of salt - it's  just
+
+First: the code feels *safe*. Even though I do not have any unit test, I'm sure it works as expected, with no errors or difficult-to-spot runtime exceptions. In a more serious setting I would write three or four unit tests and that's it. Safety is probably the number one factor that's making me research other front end languages, and Elm's strong type system seems to be a clean path towards safety.
+
+Second: the code feels *maintainable*. I may have spent a little more time implementing the first version of the function than I would with Javascript. But I found that implementing the new spec was super easy and direct, maintaining the safety feeling I had when I started coding the function.
+
+Third: it was *fun*. Fun is sometimes overlooked when talking about technologies, but it should not. Not only it helps keeping the engineers engaged, but it's usually a good signal that we are dealing with a smart and productive tool. No one finds fun in using dumb and clumsy tool, am I right? :)
+
+## Next Steps
+
+I really liked this first contact with Elm, and I pretend to continue investigating it.
+
+As a next step, I pretend to implement a web app that uses our function. I'll have to deal with Elm's tooling outside the online REPL, and I'll have to deal with asynchronous events from user interaction.
+
+Then I'll implement a web app that communicates with a server. I wonder how easy it'll be to write "impure" code in Elm.
+
+If you have had any experiences with Elm, both good or bad, feel free to post it in the comments section!
