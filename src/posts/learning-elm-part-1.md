@@ -7,7 +7,23 @@ tags: functional, types, elm
 draft: true
 ---
 
-INTRODUCTION
+A big concern when working with Javascript is *safety*. Safety in the sense of being completely sure what a piece of code does, and if changing it won't break everything. A key concept is *error feedback cycle*: how soon can you catch errors in your code?
+
+There are a lot of ways to deal with that. Linters and comprehensive tests are a good start, and they already seem like a reality for most serious projects today. Using functional programming concepts like pure functions can also help a lot by simplifying your tests, and making it easier to reason about your project.
+
+Another trend I see is *type safety*, mostly through TypeScript and Facebook Flow. They claim that, by programming with types, you can have a compiler that helps getting your code right. Not only that, the compiler will catch a lot of errors early on the process, so the error feedback cycle gets much shorter.
+
+So I decided to experiment with a typed language that compiles to Javascript. In a continuum of less type safety to more type safety, I've compiled these players:
+
+1. Plain Javascript (almost zero type safety)
+2. Facebook Flow
+3. TypeScript
+4. PureScript
+5. Elm
+
+Elm is the most "hardcore typed language" of the list, meaning that one can't even call Javascript code from Elm and vice-versa - you have to communicate through messages. On the other hand, Elm would be language that would provide more type safety benefits than the other on the list.
+
+That's why I decided to start my investigations on type safety with Elm. Let's start by implementing a relatively simple algorithm, and then we'll move on to more real-life situations.
 
 ## The Spec
 
@@ -489,3 +505,161 @@ As a next step, I pretend to implement a web app that uses our function. I'll ha
 Then I'll implement a web app that communicates with a server. I wonder how easy it'll be to write "impure" code in Elm.
 
 If you have had any experiences with Elm, both good or bad, feel free to post it in the comments section!
+
+## The Final Code
+
+You can copy and paste the following code to the online REPL and play a little bit with Elm:
+
+```elm-lang
+import Html exposing (text)
+import String
+
+type Value = Jack | Queen | King | Ace | Num Int
+type Suit = Club | Diamond | Spade | Heart
+type Card = OrdinaryCard Value Suit | Joker
+
+
+parseSuit : Char -> Maybe Suit
+parseSuit s =
+  case s of
+    'C' -> Just Club
+    'D' -> Just Diamond
+    'S' -> Just Spade
+    'H' -> Just Heart
+    _ -> Nothing
+
+
+parseNumValue : String -> Maybe Value
+parseNumValue v =
+  case String.toInt v of
+    Ok num ->
+      if (num >= 2 && num <= 10) then
+        Just (Num num)
+      else
+        Nothing
+
+    Err _ ->
+      Nothing
+
+
+parseValue : String -> Maybe Value
+parseValue v =
+  case v of
+    "J" ->
+      Just Jack
+
+    "Q" ->
+      Just Queen
+
+    "K" ->
+      Just King
+
+    "A" ->
+      Just Ace
+
+    _ ->
+      parseNumValue v
+
+
+divideCardString : String -> (Maybe String, Maybe Char)
+divideCardString str =
+  let
+    chars = String.toList str
+
+    suit = chars
+      |> List.reverse
+      |> List.head
+
+    value = chars
+      |> List.reverse
+      |> List.tail
+      |> Maybe.map List.reverse
+      |> Maybe.map String.fromList
+
+  in
+    (value, suit)
+
+
+parseCardTuple : (Maybe String, Maybe Char) -> Maybe Card
+parseCardTuple (value, suit) =
+  case (value `Maybe.andThen` parseValue, suit `Maybe.andThen` parseSuit) of
+    (Just v, Just s) ->
+      Just (OrdinaryCard v s) -- not a tuple
+
+    _ ->
+      Nothing
+
+
+parseCardString : String -> Maybe Card
+parseCardString str =
+  case str of
+    "J" ->
+      Just Joker
+
+    _ ->
+      str
+        |> divideCardString
+        |> parseCardTuple
+
+
+printSuit : Suit -> String
+printSuit suit = toString suit
+
+
+printValue : Value -> String
+printValue value =
+  case value of
+    Num 2 ->
+       "Two"
+
+    Num 3 ->
+       "Three"
+
+    Num 4 ->
+       "Four"
+
+    Num 5 ->
+       "Five"
+
+    Num 6 ->
+       "Six"
+
+    Num 7 ->
+       "Seven"
+
+    Num 8 ->
+       "Eight"
+
+    Num 9 ->
+       "Nine"
+
+    Num 10 ->
+       "Ten"
+
+    _ ->
+      toString value
+
+
+printCard : Card -> String
+printCard card =
+  case card of
+    OrdinaryCard value suit ->
+      [printValue value, " of ", printSuit suit] |> String.concat
+
+    Joker ->
+      "Joker"
+
+
+spellCard : String -> String
+spellCard str =
+  str
+    |> parseCardString
+    |> Maybe.map printCard
+    |> Maybe.withDefault "-- unknown card --"
+
+
+main =
+  "J"
+    |> spellCard
+    |> text
+```
