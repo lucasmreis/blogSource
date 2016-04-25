@@ -4,16 +4,16 @@ lead: Understanding The Benefits Of A Strong Type System
 template: post.hbt
 date: 2016-04-22
 tags: functional, types, elm
-draft: true
+draft: false
 ---
 
-A big concern when working with Javascript is *safety*. Safety in the sense of being completely sure what a piece of code does, and if changing it won't break everything. A key concept is *error feedback cycle*: how soon can you catch errors in your code?
+A big concern when working with Javascript is *safety*. Safety in the sense of being completely sure what a piece of code does, and if changing one part won't break another part. A key concept is *error feedback cycle*: how soon can you catch errors in your code?
 
-There are a lot of ways to deal with that. Linters and comprehensive tests are a good start, and they already seem like a reality for most serious projects today. Using functional programming concepts like pure functions can also help a lot by simplifying your tests, and making it easier to reason about your project.
+There are a lot of ways to deal with that. "Linters" and comprehensive tests are a good start, and they already seem like a reality for most serious projects today. Using functional programming concepts like pure functions can also help a lot by simplifying your tests, and making it easier to reason about your project.
 
-Another trend I see is *type safety*, mostly through TypeScript and Facebook Flow. They claim that, by programming with types, you can have a compiler that helps getting your code right. Not only that, the compiler will catch a lot of errors early on the process, so the error feedback cycle gets much shorter.
+Another trend I see is *type safety*, mostly through TypeScript and Facebook Flow. They claim that, by programming with types, you can have a compiler that helps you getting the code right. Not only that, the compiler will catch a lot of errors early in the process, so the error feedback cycle gets much shorter.
 
-So I decided to experiment with a typed language that compiles to Javascript. In a continuum of less type safety to more type safety, I've compiled these players:
+So I decided to experiment with a typed language that compiles to Javascript. In a continuum of less type safety to more type safety, I compiled these players:
 
 1. Plain Javascript (almost zero type safety)
 2. Facebook Flow
@@ -21,9 +21,9 @@ So I decided to experiment with a typed language that compiles to Javascript. In
 4. PureScript
 5. Elm
 
-Elm is the most "hardcore typed language" of the list, meaning that one can't even call Javascript code from Elm and vice-versa - you have to communicate through messages. On the other hand, Elm would be language that would provide more type safety benefits than the other on the list.
+Elm is the most "hardcore typed language" of the list, meaning that you can't even call Javascript code from Elm and vice-versa - you have to communicate through message passing. On the other hand, Elm would be the language that would provide the most type safety benefits of the list.
 
-That's why I decided to start my investigations on type safety with Elm. Let's start by implementing a relatively simple algorithm, and then we'll move on to more real-life situations.
+That's why I decided to start my investigations on safety with Elm. Let's start by implementing a relatively simple algorithm, and then we'll move on to more real-life situations.
 
 ## The Spec
 
@@ -43,7 +43,9 @@ I will write the algorithm using the [Try Elm website](http://elm-lang.org/examp
 
 I've read a lot about types in Haskell, OCaml and F#, but never had the chance to program anything using that kind of strong type system. I've been using dynamic languages (Javascript and Clojure) for the last years, so it feel a little weird to think of types first.
 
-That said, I've come with the following initial representation of the cards:
+Disclaimer: I'll try to be as practical as I can. I will try not to say "Monad" like everybody knows what it means, for instance :)
+
+Back to the problem, I've come with the following initial representation of the cards:
 
 ```elm-lang
 type Value = Jack | Queen | King | Ace | Num Int
@@ -61,12 +63,12 @@ I'll first print a Suit. It's a no brainer:
 printSuit suit = toString suit
 ```
 
-I'm testing that by replacing the following values in the last line:
+I'm testing it by replacing the following values in the last line:
 
 ```elm-lang
 import Html exposing (text)
 
-(...)
+-- code (...)
 
 main =
   Spade
@@ -74,7 +76,7 @@ main =
     |> text
 ```
 
-The `|>` operator chains function calls. In the above line I get Spade, call `printSuit` with it as a parameter, then get the result of that computation and call `text` with it. It shows "Spade" in the output screen, so it works! :)
+The `|>` operator chains function calls. In the above line I get Spade, call `printSuit` with it as a parameter, then get the result of that computation and call the function `text` with it. It shows "Spade" in the output screen, so it works! :)
 
 To print a Value, calling `toString` is not enough. I need to handle the `Num Int` case differently. I'll use *pattern matching* to do that:
 
@@ -112,7 +114,7 @@ printValue value =
       toString value
 ```
 
-A little boring, but I went through every case possible - unless someone enters a number less than 2 or more than 10, but I'll deal with that in the function that actually creates the card.
+A little boring, but I went through every case possible - unless someone enters a number less than 2 or more than 10. I'll deal with that in the function that actually creates the card.
 
 To print the whole card, I'll make a function that concatenates a list that consists of the value string, `" of "` and the suit string. I'll represent a card as a tuple `(Value, Suit)`:
 
@@ -130,9 +132,9 @@ main =
 
 The code above works, and I can be safe that all the combinations of Value and Suit will print well. That's really good.
 
-I'll add another layer of safety and documentation by writing the type signatures of the functions. I get myself writing "type signatures" as comments to my Javascript code from time to time, and it helps when dealing with a piece of code months later. I'm starting to believe that having a compiler that ensures that your type signatures are in sync with the implementations can help a lot with maintainability.
+I'll add another layer of safety and documentation by writing the type signatures of the functions. I get myself writing "type signatures" as comments even to my Javascript code from time to time, and it helps when dealing with a piece of code months later. I'm starting to believe that having a compiler that ensures that your type signatures are in sync with the implementations can help a lot with maintainability.
 
-`printCard` signature is: `printCard : (Value, Suit) -> String`, but I think we can be more expressive if it was `printCard : Card -> String`. That is possible with Elm, by writing a *type alias*:
+`printCard` signature is: `printCard : (Value, Suit) -> String`, but I think we can be more expressive if it is `printCard : Card -> String`. That is possible with Elm, by writing a *type alias*:
 
 ```elm-lang
 type alias Card = (Value, Suit)
@@ -153,7 +155,7 @@ printCard (value, suit) =
 
 So, if I have a valid card, I can print it. Nice. Now let's parse the original abbreviation string.
 
-## Parsing a Suit and a Value From A String
+## Parsing A Suit And A Value From A String
 
 First I'll parse the suit. My first take is:
 
@@ -167,7 +169,7 @@ parseSuit char =
     'H' -> Heart
 ```
 
-When I compile it - even before calling this function anywhere - the compiler shouted an error. This is the message I got:
+When I compile it - even before calling this function anywhere - the compiler screams an error. This is the message I get:
 
 ```
 MISSING PATTERNS
@@ -488,13 +490,13 @@ That was very easy, and I really liked the compiler help.
 
 ## First Impressions Of Elm
 
-It's a simple algorithm, and it's just a pure function. I still can't tell if a big web application Elm codebase will feel the same way, so let's all take these conclusions with a grain of salt - it's  just
+It's a simple algorithm, and it's just a pure function. I still can't tell if a big web application Elm codebase will feel the same way, so let's all take these conclusions with a grain of salt - it's just a first impression.
 
-First: the code feels *safe*. Even though I do not have any unit test, I'm sure it works as expected, with no errors or difficult-to-spot runtime exceptions. In a more serious setting I would write three or four unit tests and that's it. Safety is probably the number one factor that's making me research other front end languages, and Elm's strong type system seems to be a clean path towards safety.
+First: the code really feels *safe*. Even though I do not have any unit test, I'm sure it works as expected, with no errors or difficult-to-spot runtime exceptions. In a more serious setting I would write three or four unit tests and that's it. Safety is probably the number one factor that's making me research other front end languages, and Elm's strong type system seems to be a clean path towards safety.
 
 Second: the code feels *maintainable*. I may have spent a little more time implementing the first version of the function than I would with Javascript. But I found that implementing the new spec was super easy and direct, maintaining the safety feeling I had when I started coding the function.
 
-Third: it was *fun*. Fun is sometimes overlooked when talking about technologies, but it should not. Not only it helps keeping the engineers engaged, but it's usually a good signal that we are dealing with a smart and productive tool. No one finds fun in using dumb and clumsy tool, am I right? :)
+Third: it was *fun*. Fun is sometimes overlooked when talking about technologies, but it should not. Not only it helps keeping the engineers engaged, it's usually a good signal that we are dealing with a smart and productive tool. No one finds fun in using dumb and clumsy tool, am I right? :)
 
 ## Next Steps
 
