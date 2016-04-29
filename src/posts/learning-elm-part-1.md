@@ -7,23 +7,23 @@ tags: functional, types, elm
 draft: false
 ---
 
-A big concern when working with Javascript is *safety*. Safety in the sense of being completely sure about what a piece of code does, and knowing that changing one part won't break another part. A key concept is *error feedback cycle*: how soon can you catch errors in your code?
+A big concern when working with Javascript is *reliability*. Reliability in the sense of being completely sure about what a piece of code does, and knowing that changing one part won't break another part. A key concept is *error feedback cycle*: how soon can you catch errors in your code?
 
-There are a lot of ways to deal with that. "Linters" and comprehensive tests are a good start, and they are already a reality for most serious projects today. Using functional programming concepts like pure functions can also help a lot by simplifying your tests, and making it easier to reason about your project.
+There are a lot of ways to deal with that. "Linters" and comprehensive tests are a good start, and they are already a reality for most serious projects today. Using functional programming concepts like pure functions can also help a lot by simplifying your tests, and make it easier to reason about your project.
 
-Another trend I see is *type safety*, mostly through TypeScript and Facebook Flow. They claim that, by programming with types, you can have a compiler that helps you get the code right. Not only that, the compiler will catch a lot of errors early in the process, so the error feedback cycle gets much shorter.
+Another trend I see is using *types*, mostly through TypeScript and Facebook Flow. They claim that, by programming with types, you can have a compiler that helps you get the code right. Not only that, the compiler will catch a lot of errors early in the process, so the error feedback cycle gets much shorter.
 
-So I decided to experiment with a typed language that compiles to Javascript. In a continuum of less type safety to more type safety, I compiled these players:
+So I decided to experiment with a typed language that compiles to Javascript. In a continuum of less to more code reliability (enforced or not by types), I compiled these players:
 
-1. Plain Javascript (almost zero type safety)
+1. Plain Javascript
 2. Facebook Flow
 3. TypeScript
 4. PureScript
 5. Elm
 
-Elm is the most "hardcore typed language" of the list, meaning that you can't even call Javascript code from Elm and vice-versa - you have to communicate through message passing. On the other hand, Elm would be the language that would provide the most type safety benefits of the list.
+Elm is the most "hardcore typed language" of the list, meaning that you can't even call Javascript code from Elm and vice-versa - you have to communicate through message passing. On the other hand, Elm would be the language that would provide the most "type benefits" of the list.
 
-That's why I decided to start my investigations on safety with Elm. Let's start by implementing a relatively simple algorithm, and then we'll move on to more real-life situations.
+That's why I decided to start my investigations on reliability with Elm. Let's start by implementing a relatively simple algorithm, and then we'll move on to more real-life situations.
 
 ## The Spec
 
@@ -492,9 +492,9 @@ That was very easy, and I really liked the compiler's help.
 
 It's a simple algorithm, and it's just a pure function. I still can't tell if a big web application Elm codebase will feel the same way, so let's all take these conclusions with a grain of salt - it's just a first impression.
 
-First: the code really feels *safe*. Even though I do not have any unit tests, I'm sure it works as expected, with no errors or difficult-to-spot runtime exceptions. In a more serious setting, I would write three or four unit tests and that's it. Safety is probably the number one factor that's making me research other front end languages, and Elm's strong type system seems to be a clean path towards safety.
+First: the code really feels *reliable*. Even though I do not have any unit tests, I'm sure it works as expected, with no errors or difficult-to-spot runtime exceptions. In a more serious setting, I would write three or four unit tests and that's it. Reliability is probably the number one factor that's making me research other front end languages, and Elm's strong type system seems to be a clean path towards that.
 
-Second: the code feels *maintainable*. I may have spent a little more time implementing the first version of the function than I would with Javascript. But I found that implementing the new spec was very easy and direct, maintaining the safety feeling I had when I started coding the function.
+Second: the code feels *maintainable*. I may have spent a little more time implementing the first version of the function than I would with Javascript. But I found that implementing the new spec was very easy and direct, maintaining the reliability feeling I had when I started coding the function.
 
 Third: it was *fun*. Fun is sometimes overlooked when talking about technologies, but it should not be. Not only does it help keep the engineers engaged, it's usually a good signal that we are dealing with a smart and productive tool. No one finds using a dumb and clumsy tool fun, am I right? :)
 
