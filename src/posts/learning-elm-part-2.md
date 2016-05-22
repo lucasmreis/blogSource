@@ -36,7 +36,7 @@ Now we have everything setup to start building our first Elm app.
 
 ## The Layout
 Let's start by coding the layout. We will use a "standard" library called `elm-html`. It uses a virtual-dom technique to render the view, and we declare it as code:
-```elm-lang
+```
 module Main exposing (..)
 
 import Html exposing (div, input, p, text)
@@ -58,7 +58,7 @@ Every Html node is a function of two parameters: attributes and the children nod
 ```
 It takes a little time to get used to it, but it's actually very simple. We could style it with CSS, but for the sake of learning, let's do it inside Elm:
 
-```elm-lang
+```
 module Main exposing (..)
 
 import Html exposing (div, input, p, text)
@@ -122,7 +122,7 @@ The view is then a function of the model. It takes the data and renders it.
 After rendering, the application "waits" for user interaction or any other event. When that happens, it triggers the update function. The update function is a function that receives the old model and data of the event, and returns a new model. This model is then rendered, and the loop continues.
 
 Elm gives us a function that does all the "plumbing" for us, and it's called `Html.App.program`. We'll use a simpler version of it, because that's everything we need for our small app, and it's called `beginnerProgram`. With it, you only need to define your model, update and view and the program does the heavy work for you:
-```elm-lang
+```
 import Html.App exposing (beginnerProgram)
 
 
@@ -139,7 +139,7 @@ Now let's define `init`,  `view` and `update`.
 ## The Model
 The user interacts through an input. That means we need a String in our model to hold it. We do not need anything else, since the other changing part of our view is simply a function of that String.
 
-```elm-lang
+```
 type alias Model =
     String
 
@@ -153,7 +153,7 @@ That's all the model we need for our spec, and a function to initialize it.
 ## The View
 The view will be a function of our model. Let's use our layout as a starting point:
 
-```elm-lang
+```
 view model =
     div [ mainStyle ]
         [ input
@@ -167,7 +167,7 @@ view model =
 
 So, our view still does not use the model. Remember that we need to render the model string after parsing it, so let's do it:
 
-```elm-lang
+```
 import CardParser
 
 (...)
@@ -189,7 +189,7 @@ view address model =
 ```
 
 Add a generic update function to the code to see the page rendered:
-```elm-lang
+```
 update msg model =
     model
 ```
@@ -199,7 +199,7 @@ And we can see our app working! Change the initial value of the model in the beg
 The update function is also simple: as the user types something in the input field, it changes the model. Html.App will make sure our new model is then rendered through the view function.
 
 The update mechanism works through message passing. The view sends messages that are processed by the update function, and then it produces a new model:
-```elm-lang
+```
 type Msg
     = ChangeText String
 
@@ -211,7 +211,7 @@ update msg model =
             newText
 ```
 Now we need to send those messages on user input:
-```elm-lang
+```
 import Html.Events exposing (onInput)
 
 (...)
@@ -239,7 +239,7 @@ Don't they always? :)
 Our app now needs *two inputs* that work the same way. The first thing that pops into our head is making a component of our current app, and then showing two of them. Let's do it.
 
 Let's first create a new file called `ParserComponent.elm`, and move all the model, view and update code there. Our Main module will look like:
-```elm-lang
+```
 module Main exposing (..)
 
 import Html.App exposing (beginnerProgram)
@@ -255,7 +255,7 @@ main =
 
 ```
 And our app will work the same way. Now, to have two of the same components, let's define a new model, view and update for our app:
-```elm-lang
+```
 type alias Model =
     { firstParser : ParserComponent.Model
     , secondParser : ParserComponent.Model
@@ -266,7 +266,7 @@ init first second =
     Model first second
 ```
 First of all, our new model is comprised of two ParserComponents models. Ok. Now how will we update them? We will *tag* every message that is sent from each component, and then treat each of them in a new update function:
-```elm-lang
+```
 type Msg
     = First ParserComponent.Msg
     | Second ParserComponent.Msg
@@ -283,7 +283,7 @@ So, now our messages can be sent by the first or second component, and we'll tag
 
 Now let's see how to actually tag those messages in the new view:
 
-```elm-lang
+```
 
 view model =
     div []
@@ -305,7 +305,7 @@ Refresh again the Reactor page and there you have it - two independently working
 To test even more how easy and safe it is to change our Elm code, let's change our spec once more. Let's say each component has now to parse a *list of cards*, separated by comma.
 
 We can achieve that by *only changing the view function of the component*:
-```elm-lang
+```
 sentence card =
     p [ cardStyle ] [ text card ]
 

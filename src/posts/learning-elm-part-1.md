@@ -47,7 +47,7 @@ Disclaimer: I'll try to be as practical as I can. I'll try not to say "Monad" li
 
 Back to the problem, I've come with the following initial representation of the cards:
 
-```elm-lang
+```
 type Value = Jack | Queen | King | Ace | Num Int
 type Suit = Club | Diamond | Spade | Heart
 ```
@@ -59,13 +59,13 @@ That seems like a nice model for our problem. Now let's implement the functions 
 
 I'll first print a Suit. It's a no brainer:
 
-```elm-lang
+```
 printSuit suit = toString suit
 ```
 
 I'm testing it by replacing the following values in the last line:
 
-```elm-lang
+```
 import Html exposing (text)
 
 -- code (...)
@@ -80,7 +80,7 @@ The `|>` operator chains function calls. In the above line I get Spade, call `pr
 
 To print a Value, calling `toString` is not enough. I need to handle the `Num Int` case differently. I'll use *pattern matching* to do that:
 
-```elm-lang
+```
 printValue value =
   case value of
     Num 2 ->
@@ -118,7 +118,7 @@ A little boring, but I went through every case possible - unless someone enters 
 
 To print the whole card, I'll make a function that concatenates a list that consists of: the value string, `" of "` and the suit string. I'll represent a card as a tuple `(Value, Suit)`:
 
-```elm-lang
+```
 printCard (value, suit) =
   [printValue value, " of ", printSuit suit] |> String.concat
 
@@ -136,7 +136,7 @@ I'll add another layer of safety and documentation by writing the type signature
 
 `printCard` signature is: `printCard : (Value, Suit) -> String`, but I think we can be more expressive if it is `printCard : Card -> String`. That is possible with Elm, by writing a *type alias*:
 
-```elm-lang
+```
 type alias Card = (Value, Suit)
 
 (...)
@@ -159,7 +159,7 @@ So, if I have a valid card, I can print it. Nice. Now let's parse the original a
 
 First I'll parse the suit. My first take is:
 
-```elm-lang
+```
 parseSuit : Char -> Suit
 parseSuit char =
   case char of
@@ -197,7 +197,7 @@ But, better than that, I really like how *didatic* the message was. Not only doe
 
 By reading that link, I learned that the best way to deal with this in this case is by using a Maybe type. Maybe is native to Elm, and represented by:
 
-```elm-lang
+```
 type Maybe a
   = Just a
   | Nothing
@@ -205,7 +205,7 @@ type Maybe a
 
 Maybe represents a value that may or may not exist. So I'll make the assumption that if the Char inputted by the user is not one of the four, the Suit will not exist and will be represented by a Nothing:
 
-```elm-lang
+```
 parseSuit : Char -> Maybe Suit
 parseSuit s =
   case s of
@@ -228,7 +228,7 @@ The best part of using *a maybe* is that the functions that deal with the value 
 
 A simple implementation would be:
 
-```elm-lang
+```
 parseValue : String -> Maybe Value
 parseValue v =
   case v of
@@ -250,7 +250,7 @@ parseValue v =
 
 But the compiler screams that `String.toInt` does not return a Maybe Value. It returns a Result String Int which is described by `type Result error value = Ok value | Err error`. Let's extract this case to a different function so we can manage better `toInt`:
 
-```elm-lang
+```
 parseNumValue : String -> Maybe Value
 parseNumValue v =
   case String.toInt v of
@@ -299,7 +299,7 @@ Now we can parse a Value and a Suit. The next step is parsing the whole abbrevia
 
 We need to separate the abbreviation string into a value string and a suit character. Now this is a fun function:
 
-```elm-lang
+```
 divideCardString : String -> (Maybe String, Maybe Char)
 divideCardString str =
   let
@@ -337,7 +337,7 @@ To compute the next variables, I did not choose the most efficient way, and that
 
 Now the function that takes this tuple and returns a Maybe Card:
 
-```elm-lang
+```
 parseCardTuple : (Maybe String, Maybe Char) -> Maybe Card
 parseCardTuple (value, suit) =
   case (value `Maybe.andThen` parseValue, suit `Maybe.andThen` parseSuit) of
@@ -366,7 +366,7 @@ Now our algorithm is ready! Let's glue all the parts together.
 
 The final function is just a composition of the ones we just built:
 
-```elm-lang
+```
 spellCard : String -> String
 spellCard str =
   str
@@ -379,7 +379,7 @@ It does not compile. The compiler tells us that `parseCardTuple` returns a Maybe
 
 The `Maybe` module has a function for that: `Maybe.withDefault`. It accepts a default value and a Maybe. If the Maybe is a Just, it returns the value inside the Just. If it's a Nothing, it returns the default value. Here is the official implementation of [`Maybe.withDefault`](https://github.com/elm-lang/core/blob/master/src/Maybe.elm#L51):
 
-```elm-lang
+```
 withDefault : a -> Maybe a -> a
 withDefault default maybe =
   case maybe of
@@ -389,7 +389,7 @@ withDefault default maybe =
 
 Using it, our final function is described as:
 
-```elm-lang
+```
 spellCard : String -> String
 spellCard str =
   str
@@ -421,13 +421,13 @@ Let's suppose we want to include the Joker card:
 
 The first thing I notice is that our model is not sufficient anymore. A card is not a tuple of value and suit; now we also have a joker. I'm gonna change the `Card` type, and run the compiler to see what it says:
 
-```elm-lang
+```
 type Card = OrdinaryCard Value Suit | Joker
 ```
 
 The compiler complains that `printCard` does not print a Card, it prints a tuple. Let's change it:
 
-```elm-lang
+```
 printCard : Card -> String
 printCard card =
   case card of
@@ -442,7 +442,7 @@ The other error the compiler caught was that `parseCardTuple` does not return a 
 
 The Joker abbreviation is only a `"J"`, so it does not make sense to call `divideCardString` with it! If I have a `"J"`, I should return a Just Joker. To do that, I'm gonna implement a new function:
 
-```elm-lang
+```
 parseCardString : String -> Maybe Card
 parseCardString str =
   case str of
@@ -457,7 +457,7 @@ parseCardString str =
 
 It handles the case `"J"` separately, and calls our previous function if it's not a Joker. Now we only have to change `parseCardTuple` to return an OrdinaryCard instead of the tuple in case of success:
 
-```elm-lang
+```
 parseCardTuple : (Maybe String, Maybe Char) -> Maybe Card
 parseCardTuple (value, suit) =
   case (value `Maybe.andThen` parseValue, suit `Maybe.andThen` parseSuit) of
@@ -470,7 +470,7 @@ parseCardTuple (value, suit) =
 
 And change `spellCard`:
 
-```elm-lang
+```
 spellCard : String -> String
 spellCard str =
   str
@@ -512,7 +512,7 @@ If you have had any experiences with Elm, good or bad, feel free to post it in t
 
 You can copy and paste the following code to the online REPL and play a little bit with Elm:
 
-```elm-lang
+```
 import Html exposing (text)
 import String
 
