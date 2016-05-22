@@ -448,7 +448,7 @@ parseCardString str =
   case str of
     "J" ->
       Just Joker
-    
+
     _ ->
       str
         |> divideCardString

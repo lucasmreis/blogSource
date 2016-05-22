@@ -4,7 +4,7 @@ lead: Understanding The Benefits Of A Simple Architecture
 template: post.hbt
 date: 2016-05-21
 tags: functional, types, elm
-draft: true
+draft: false
 ---
 
 *This is part 2 of a series. You can read [part 1 here](http://lucasmreis.github.io/blog/learning-elm-part-1/).*
