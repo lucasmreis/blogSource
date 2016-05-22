@@ -71,9 +71,9 @@ import Html exposing (text)
 -- code (...)
 
 main =
- Spade
- |> printSuit
- |> text
+  Spade
+    |> printSuit
+    |> text
 ```
 
 The `|>` operator chains function calls. In the above line I get Spade, call `printSuit` with it as a parameter, then get the result of that computation and call the function `text` with it. It shows "Spade" in the output screen, so it works! :)
@@ -82,36 +82,36 @@ To print a Value, calling `toString` is not enough. I need to handle the `Num In
 
 ```elm-lang
 printValue value =
- case value of
- Num 2 ->
- "Two"
+  case value of
+    Num 2 ->
+      "Two"
 
- Num 3 ->
- "Three"
+    Num 3 ->
+      "Three"
 
- Num 4 ->
- "Four"
+    Num 4 ->
+      "Four"
 
- Num 5 ->
- "Five"
+    Num 5 ->
+      "Five"
 
- Num 6 ->
- "Six"
+    Num 6 ->
+      "Six"
 
- Num 7 ->
- "Seven"
+    Num 7 ->
+      "Seven"
 
- Num 8 ->
- "Eight"
+    Num 8 ->
+      "Eight"
 
- Num 9 ->
- "Nine"
+    Num 9 ->
+      "Nine"
 
- Num 10 ->
- "Ten"
+    Num 10 ->
+      "Ten"
 
- _ ->
- toString value
+    _ ->
+      toString value
 ```
 
 A little boring, but I went through every case possible - unless someone enters a number less than 2 or more than 10. I'll deal with that in the function that actually creates the card.
@@ -120,12 +120,12 @@ To print the whole card, I'll make a function that concatenates a list that cons
 
 ```elm-lang
 printCard (value, suit) =
- [printValue value, " of ", printSuit suit] |> String.concat
+  [printValue value, " of ", printSuit suit] |> String.concat
 
 main =
- (Num 10, Spade)
- |> printCard
- |> text
+  (Num 10, Spade)
+    |> printCard
+    |> text
 
 -- Ten of Spade
 ```
@@ -143,12 +143,12 @@ type alias Card = (Value, Suit)
 
 printCard : Card -> String
 printCard (value, suit) =
- [printValue value, " of ", printSuit suit] |> String.concat
+  [printValue value, " of ", printSuit suit] |> String.concat
 
 main =
- (Num 10, Spade)
- |> printCard
- |> text
+  (Num 10, Spade)
+    |> printCard
+    |> text
 
 -- Ten of Spade
 ```
@@ -162,11 +162,11 @@ First I'll parse the suit. My first take is:
 ```elm-lang
 parseSuit : Char -> Suit
 parseSuit char =
- case char of
- 'C' -> Club
- 'D' -> Diamond
- 'S' -> Spade
- 'H' -> Heart
+  case char of
+    'C' -> Club
+    'D' -> Diamond
+    'S' -> Spade
+    'H' -> Heart
 ```
 
 When I compile it - even before calling this function anywhere - the compiler screams an error. This is the message I get:
@@ -199,8 +199,8 @@ By reading that link, I learned that the best way to deal with this in this case
 
 ```elm-lang
 type Maybe a
- = Just a
- | Nothing
+  = Just a
+  | Nothing
 ```
 
 Maybe represents a value that may or may not exist. So I'll make the assumption that if the Char inputted by the user is not one of the four, the Suit will not exist and will be represented by a Nothing:
@@ -208,18 +208,18 @@ Maybe represents a value that may or may not exist. So I'll make the assumption 
 ```elm-lang
 parseSuit : Char -> Maybe Suit
 parseSuit s =
- case s of
- 'C' -> Just Club
- 'D' -> Just Diamond
- 'S' -> Just Spade
- 'H' -> Just Heart
- _ -> Nothing
+  case s of
+    'C' -> Just Club
+    'D' -> Just Diamond
+    'S' -> Just Spade
+    'H' -> Just Heart
+    _ -> Nothing
 
 main =
- 'C'
- |> parseSuit
- |> toString
- |> text
+  'C'
+    |> parseSuit
+    |> toString
+    |> text
 
 -- Just Club
 ```
@@ -231,21 +231,21 @@ A simple implementation would be:
 ```elm-lang
 parseValue : String -> Maybe Value
 parseValue v =
- case v of
- "J" ->
- Just Jack
+  case v of
+    "J" ->
+      Just Jack
 
- "Q" ->
- Just Queen
+    "Q" ->
+      Just Queen
 
- "K" ->
- Just King
+    "K" ->
+      Just King
 
- "A" ->
- Just Ace
+    "A" ->
+      Just Ace
 
- _ ->
- String.toInt v
+    _ ->
+      String.toInt v
 ```
 
 But the compiler screams that `String.toInt` does not return a Maybe Value. It returns a Result String Int which is described by `type Result error value = Ok value | Err error`. Let's extract this case to a different function so we can manage better `toInt`:
@@ -253,40 +253,40 @@ But the compiler screams that `String.toInt` does not return a Maybe Value. It r
 ```elm-lang
 parseNumValue : String -> Maybe Value
 parseNumValue v =
- case String.toInt v of
- Ok num ->
- if (num >= 2 && num <= 10) then
- Just (Num num)
- else
- Nothing
+  case String.toInt v of
+    Ok num ->
+      if (num >= 2 && num <= 10) then
+        Just (Num num)
+      else
+        Nothing
 
- Err _ ->
- Nothing
+    Err _ ->
+      Nothing
 
 
 parseValue : String -> Maybe Value
 parseValue v =
- case v of
- "J" ->
- Just Jack
+  case v of
+    "J" ->
+      Just Jack
 
- "Q" ->
- Just Queen
+    "Q" ->
+      Just Queen
 
- "K" ->
- Just King
+    "K" ->
+      Just King
 
- "A" ->
- Just Ace
+    "A" ->
+      Just Ace
 
- _ ->
- parseNumValue v
+    _ ->
+      parseNumValue v
 
 main =
- "10"
- |> parseValue
- |> toString
- |> text
+  "10"
+    |> parseValue
+    |> toString
+    |> text
 
 -- Just (Num 10)
 ```
@@ -302,27 +302,27 @@ We need to separate the abbreviation string into a value string and a suit chara
 ```elm-lang
 divideCardString : String -> (Maybe String, Maybe Char)
 divideCardString str =
- let
- chars = String.toList str
+  let
+    chars = String.toList str
 
- suit = chars
- |> List.reverse
- |> List.head
+    suit = chars
+      |> List.reverse
+      |> List.head
 
- value = chars
- |> List.reverse
- |> List.tail
- |> Maybe.map List.reverse
- |> Maybe.map String.fromList
+    value = chars
+      |> List.reverse
+      |> List.tail
+      |> Maybe.map List.reverse
+      |> Maybe.map String.fromList
 
- in
- (value, suit)
+  in
+    (value, suit)
 
 main =
- "AH"
- |> divideCardString
- |> toString
- |> text
+  "AH"
+    |> divideCardString
+    |> toString
+    |> text
 
 -- (Just "A", Just 'H')
 ```
@@ -340,18 +340,18 @@ Now the function that takes this tuple and returns a Maybe Card:
 ```elm-lang
 parseCardTuple : (Maybe String, Maybe Char) -> Maybe Card
 parseCardTuple (value, suit) =
- case (value `Maybe.andThen` parseValue, suit `Maybe.andThen` parseSuit) of
- (Just v, Just s) ->
- Just (v, s)
+  case (value `Maybe.andThen` parseValue, suit `Maybe.andThen` parseSuit) of
+    (Just v, Just s) ->
+      Just (v, s)
 
- _ ->
- Nothing
+    _ ->
+      Nothing
 
 main =
- (Just "7", Just 'D')
- |> parseCardTuple
- |> toString
- |> text
+  (Just "7", Just 'D')
+    |> parseCardTuple
+    |> toString
+    |> text
 
 -- Just ((Num 7,Diamond))
 ```
@@ -369,10 +369,10 @@ The final function is just a composition of the ones we just built:
 ```elm-lang
 spellCard : String -> String
 spellCard str =
- str
- |> divideCardString
- |> parseCardTuple
- |> printCard
+  str
+    |> divideCardString
+    |> parseCardTuple
+    |> printCard
 ```
 
 It does not compile. The compiler tells us that `parseCardTuple` returns a Maybe Card, and `printCard` was expecting a Card. We already know how to solve it, we just change it to `Maybe.map printCard`. The problem is that the function would still return a Maybe String, and we want to extract a String from it.
@@ -382,9 +382,9 @@ The `Maybe` module has a function for that: `Maybe.withDefault`. It accepts a de
 ```elm-lang
 withDefault : a -> Maybe a -> a
 withDefault default maybe =
- case maybe of
- Just value -> value
- Nothing -> default
+  case maybe of
+    Just value -> value
+    Nothing -> default
 ```
 
 Using it, our final function is described as:
@@ -392,17 +392,17 @@ Using it, our final function is described as:
 ```elm-lang
 spellCard : String -> String
 spellCard str =
- str
- |> divideCardString
- |> parseCardTuple
- |> Maybe.map printCard
- |> Maybe.withDefault "-- unknown card --"
+  str
+    |> divideCardString
+    |> parseCardTuple
+    |> Maybe.map printCard
+    |> Maybe.withDefault "-- unknown card --"
 
 
 main =
- "AH"
- |> spellCard
- |> text
+  "AH"
+    |> spellCard
+    |> text
 
 -- Ace of Heart
 ```
@@ -430,12 +430,12 @@ The compiler complains that `printCard` does not print a Card, it prints a tuple
 ```elm-lang
 printCard : Card -> String
 printCard card =
- case card of
- OrdinaryCard value suit ->
- [printValue value, " of ", printSuit suit] |> String.concat
+  case card of
+    OrdinaryCard value suit ->
+      [printValue value, " of ", printSuit suit] |> String.concat
 
- Joker ->
- "Joker"
+  Joker ->
+    "Joker"
 ```
 
 The other error the compiler caught was that `parseCardTuple` does not return a Card. Now it's time to pause a little and think about the parsers.
@@ -445,14 +445,14 @@ The Joker abbreviation is only a `"J"`, so it does not make sense to call `divid
 ```elm-lang
 parseCardString : String -> Maybe Card
 parseCardString str =
- case str of
- "J" ->
- Just Joker
-
- _ ->
- str
- |> divideCardString
- |> parseCardTuple
+  case str of
+    "J" ->
+      Just Joker
+    
+    _ ->
+      str
+        |> divideCardString
+        |> parseCardTuple
 ```
 
 It handles the case `"J"` separately, and calls our previous function if it's not a Joker. Now we only have to change `parseCardTuple` to return an OrdinaryCard instead of the tuple in case of success:
@@ -460,12 +460,12 @@ It handles the case `"J"` separately, and calls our previous function if it's no
 ```elm-lang
 parseCardTuple : (Maybe String, Maybe Char) -> Maybe Card
 parseCardTuple (value, suit) =
- case (value `Maybe.andThen` parseValue, suit `Maybe.andThen` parseSuit) of
- (Just v, Just s) ->
- Just (OrdinaryCard v s) -- not a tuple
+  case (value `Maybe.andThen` parseValue, suit `Maybe.andThen` parseSuit) of
+    (Just v, Just s) ->
+      Just (OrdinaryCard v s) -- not a tuple
 
- _ ->
- Nothing
+  _ ->
+    Nothing
 ```
 
 And change `spellCard`:
@@ -473,15 +473,15 @@ And change `spellCard`:
 ```elm-lang
 spellCard : String -> String
 spellCard str =
- str
- |> parseCardString
- |> Maybe.map printCard
- |> Maybe.withDefault "-- unknown card --"
+  str
+    |> parseCardString
+    |> Maybe.map printCard
+    |> Maybe.withDefault "-- unknown card --"
 
 main =
- "J"
- |> spellCard
- |> text
+  "J"
+    |> spellCard
+    |> text
 
 -- Joker
 ```
@@ -523,85 +523,85 @@ type Card = OrdinaryCard Value Suit | Joker
 
 parseSuit : Char -> Maybe Suit
 parseSuit s =
- case s of
- 'C' -> Just Club
- 'D' -> Just Diamond
- 'S' -> Just Spade
- 'H' -> Just Heart
- _ -> Nothing
+  case s of
+    'C' -> Just Club
+    'D' -> Just Diamond
+    'S' -> Just Spade
+    'H' -> Just Heart
+    _ -> Nothing
 
 
 parseNumValue : String -> Maybe Value
 parseNumValue v =
- case String.toInt v of
- Ok num ->
- if (num >= 2 && num <= 10) then
- Just (Num num)
- else
- Nothing
+  case String.toInt v of
+    Ok num ->
+      if (num >= 2 && num <= 10) then
+        Just (Num num)
+      else
+        Nothing
 
- Err _ ->
- Nothing
+    Err _ ->
+      Nothing
 
 
 parseValue : String -> Maybe Value
 parseValue v =
- case v of
- "J" ->
- Just Jack
+  case v of
+    "J" ->
+      Just Jack
 
- "Q" ->
- Just Queen
+    "Q" ->
+      Just Queen
 
- "K" ->
- Just King
+    "K" ->
+      Just King
 
- "A" ->
- Just Ace
+    "A" ->
+      Just Ace
 
- _ ->
- parseNumValue v
+    _ ->
+      parseNumValue v
 
 
 divideCardString : String -> (Maybe String, Maybe Char)
 divideCardString str =
- let
- chars = String.toList str
+  let
+    chars = String.toList str
 
- suit = chars
- |> List.reverse
- |> List.head
+    suit = chars
+      |> List.reverse
+      |> List.head
 
- value = chars
- |> List.reverse
- |> List.tail
- |> Maybe.map List.reverse
- |> Maybe.map String.fromList
+    value = chars
+      |> List.reverse
+      |> List.tail
+      |> Maybe.map List.reverse
+      |> Maybe.map String.fromList
 
- in
- (value, suit)
+  in
+    (value, suit)
 
 
 parseCardTuple : (Maybe String, Maybe Char) -> Maybe Card
 parseCardTuple (value, suit) =
- case (value `Maybe.andThen` parseValue, suit `Maybe.andThen` parseSuit) of
- (Just v, Just s) ->
- Just (OrdinaryCard v s) -- not a tuple
+  case (value `Maybe.andThen` parseValue, suit `Maybe.andThen` parseSuit) of
+    (Just v, Just s) ->
+      Just (OrdinaryCard v s) -- not a tuple
 
- _ ->
- Nothing
+    _ ->
+      Nothing
 
 
 parseCardString : String -> Maybe Card
 parseCardString str =
- case str of
- "J" ->
- Just Joker
+  case str of
+    "J" ->
+      Just Joker
 
- _ ->
- str
- |> divideCardString
- |> parseCardTuple
+    _ ->
+      str
+        |> divideCardString
+        |> parseCardTuple
 
 
 printSuit : Suit -> String
@@ -610,58 +610,58 @@ printSuit suit = toString suit
 
 printValue : Value -> String
 printValue value =
- case value of
- Num 2 ->
- "Two"
+  case value of
+    Num 2 ->
+      "Two"
 
- Num 3 ->
- "Three"
+    Num 3 ->
+      "Three"
 
- Num 4 ->
- "Four"
+    Num 4 ->
+      "Four"
 
- Num 5 ->
- "Five"
+    Num 5 ->
+      "Five"
 
- Num 6 ->
- "Six"
+    Num 6 ->
+      "Six"
 
- Num 7 ->
- "Seven"
+    Num 7 ->
+      "Seven"
 
- Num 8 ->
- "Eight"
+    Num 8 ->
+      "Eight"
 
- Num 9 ->
- "Nine"
+    Num 9 ->
+      "Nine"
 
- Num 10 ->
- "Ten"
+    Num 10 ->
+      "Ten"
 
- _ ->
- toString value
+    _ ->
+      toString value
 
 
 printCard : Card -> String
 printCard card =
- case card of
- OrdinaryCard value suit ->
- [printValue value, " of ", printSuit suit] |> String.concat
+  case card of
+    OrdinaryCard value suit ->
+      [printValue value, " of ", printSuit suit] |> String.concat
 
- Joker ->
- "Joker"
+  Joker ->
+    "Joker"
 
 
 spellCard : String -> String
 spellCard str =
- str
- |> parseCardString
- |> Maybe.map printCard
- |> Maybe.withDefault "-- unknown card --"
+  str
+    |> parseCardString
+    |> Maybe.map printCard
+    |> Maybe.withDefault "-- unknown card --"
 
 
 main =
- "J"
- |> spellCard
- |> text
+  "J"
+    |> spellCard
+    |> text
 ```
