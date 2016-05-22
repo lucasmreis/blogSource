@@ -41,6 +41,5 @@
       ga('create', 'UA-60280937-1', 'auto');
       ga('send', 'pageview');
     </script>
-    <script src="../js/highlight.js"></script>
   </body>
 </html>
