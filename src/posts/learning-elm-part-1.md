@@ -7,6 +7,8 @@ tags: functional, types, elm
 draft: false
 ---
 
+*This is part 1 of a series. You can read [part 2 here](http://lucasmreis.github.io/blog/learning-elm-part-2/).*
+
 A big concern when working with Javascript is *reliability*. Reliability in the sense of being completely sure about what a piece of code does, and knowing that changing one part won't break another part. A key concept is *error feedback cycle*: how soon can you catch errors in your code?
 
 There are a lot of ways to deal with that. "Linters" and comprehensive tests are a good start, and they are already a reality for most serious projects today. Using functional programming concepts like pure functions can also help a lot by simplifying your tests, and make it easier to reason about your project.
