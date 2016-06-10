@@ -438,7 +438,9 @@ From now on, it's a "complete the puzzle" game. Just fill in the blanks asked by
 
 I can see two clear next steps for the app: making the requests parallel, and using animations for the transitions between the application states. As I said before, any ideas are welcome.
 
-[Here's the complete code](https://github.com/lucasmreis/learning-elm/tree/master/part-3/app/elm).
+[Here's the working app](http://lucasmreis.github.io/star-wars-elm/)!
+
+[And here's the complete code](https://github.com/lucasmreis/learning-elm/tree/master/part-3/app/elm).
 
 ## Conclusions
 
