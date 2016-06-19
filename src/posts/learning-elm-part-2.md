@@ -180,7 +180,7 @@ import CardParser
 
 (...)
 
-view address model =
+view model =
   let
     card =
       CardParser.spellCard model
