@@ -41,6 +41,7 @@ view model =
 
 -- imports and styles omitted for brevity...
 ```
+
 ```
 -- Film.elm
 
@@ -139,7 +140,9 @@ model =
         , sampleFilm
         ]
 ```
+
 And then, I'll use it to define the view, while refreshing Elm Reactor:
+
 ```
 view model =
     case model of
@@ -159,6 +162,7 @@ view model =
 twoColumns =
     style [ ( "display", "flex" ) ]
 ```
+
 Just change the sample and it works very well!
 
 So, as a next step, I want to make the application retrieve actual information from the API. This is where things are different from [part 2](http://lucasmreis.github.io/blog/learning-elm-part-2/), because now our update function not only deals with the model, it also deals with *Commands*.
@@ -236,6 +240,7 @@ characterDecoder =
         |: ("films" := list string)
 
 ```
+
 The `|:` comes from the `elm-community/elm-json-extra` package, and feels like a better way to parse a json than the standard library.
 
 So now I have the decoder. Let's go back to Main and implement the `getCharacter` command for init:
@@ -264,6 +269,7 @@ But it is:
 
 (...)
 ```
+
 That means `getCharacter` is not returning a command, it's returning a `Task`. A task is actually a *representation* of an action that has not happened, and may or may not fail. To run the task, we need to feed it to the `Task.perform` function:
 
 ```
@@ -360,6 +366,7 @@ filmDecoder =
         |: ("episode_id" := int)
         |: ("characters" := list string)
 ```
+
 ```
 -- Main.elm
 type Msg
