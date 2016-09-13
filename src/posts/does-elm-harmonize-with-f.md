@@ -18,7 +18,7 @@ The first week with F# was not easy. I did not have any clue where to start sinc
 
 Every F# project needs a `*.fsproj` config file, which is a big messy XML, that is not meant to be changed by "human beings" (as opposed to the simpler `package.json` from Node or `elm-package.json` from Elm). But it turns out that the F# open source community built some nice tools to deal with it. Summing up, install the [Ionide](http://ionide.io/) extension to VS Code or Atom, and everything will be easier.
 
-My programming workflow then became: use [Paket](https://github.com/fsprojects/Paket) to deal with the dependencies, and [Fake](http://fsharp.github.io/FAKE/) to deal with building tasks. F# has a REPL, and it's usual to have a `.fsx` script file around to send code to the REPL. Every module I wrote started in a `.fsx` file, and when I was happy with the results I would copy the code to a regular `.fs` file. I do not know if it's the ideal workflow, but it worked well!
+REWRITE: My programming workflow then became: use [Paket](https://github.com/fsprojects/Paket) to deal with the dependencies, and [Fake](http://fsharp.github.io/FAKE/) to deal with building tasks. F# has a REPL, and it's usual to have a `.fsx` script file around to send code to the REPL. Every module I wrote started in a `.fsx` file, and when I was happy with the results I would copy the code to a regular `.fs` file. I do not know if it's the ideal workflow, but it worked well!
 
 With F# up and running, I decided to implement a simple project to learn the language.
 
@@ -167,3 +167,6 @@ store.SaveEvent.Add(logger)
 ```
 
 [The complete EventStore, with generic typing, is here](https://github.com/lucasmreis/AmazingCookies/blob/master/src/EventStore/EventStore.fs).
+
+## A Server
+
