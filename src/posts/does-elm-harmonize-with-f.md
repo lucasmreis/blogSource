@@ -170,3 +170,106 @@ store.SaveEvent.Add(logger)
 
 ## A Server
 
+Years ago I worked with C#, and wrote a server with ASP.NET MVC. I thought I was going to write the server using F#/C# "interop" (and was not very happy about it :) ). How glad I was to come accross an "F# native" web server framework called [Suave](https://suave.io/). Suave in portuguese means *smooth*, and that's exactly how it feels to write a server with it!
+
+For instance, look at the final code for the server:
+
+```fsharp
+let app store =
+    choose [
+        path "/"          >=> Files.sendFile "build/index.html" true
+        path "/dashboard" >=> Files.sendFile "build/dashboard.html" true
+        path "/websocket" >=> handShake (eventSocket store)
+        path "/command"   >=> POST >=> request(commandRequest store)
+        ServerErrors.INTERNAL_ERROR "Sorry, route not valid!" ]
+```
+
+Super clear, right? Writing this server was super easy. The routes are defined through function composition, and Suave comes with some functions that define standard server behaviors, like `Filters.POST`, `Files.sendFile` and `ServerErrors.INTERNAL_ERROR`.
+
+I found one problem while trying to make it work: *there's simply no documentation on working with websockets*. After googling it, the material I had was a couple of StackOverflow questions, and [this example from the project github](https://github.com/SuaveIO/suave/blob/master/examples/WebSocket/Program.fs).
+
+After these hours trying to make it work, I could make it work. This is part of the final code for the socket code:
+
+```fsharp
+...
+
+socket {
+    let loop = ref true
+    while !loop do
+        let! msg = webSocket.read()
+        match msg with
+        | (Ping, _, _) -> do! webSocket.send Pong [||] true
+        | (Close, _, _) ->
+            do! webSocket.send Close [||] true
+            subscription.Dispose()
+            loop := false
+        | _ -> ()
+    }
+```
+
+It's a computation expression! Gotta love those.
+
+[The complete code for the server can be found here](https://github.com/lucasmreis/AmazingCookies/tree/master/src/Server).
+
+## An Elm dashboard
+
+After implementing all those F#, it was time to come back to Elm. The dashboard architecture was simple: the app listens for events through the native websockets implementation, and it drives the standard Elm architecture. That's how the final result looks like (notice I'm using Postman to send the scouts command to the server):
+
+-- ANIMATED GIF --
+
+One of the best part of Elm is that the structure of the code does not seem to change from application to application I write. The "framework" part of it is so close to the language itself, that one simply does not try to do things in a different way - and I don't even think it's possible. That way we can focus more on the real complexity of the problem, and think less and less about implementation details.
+
+The only different part from my [earlier]() [learning Elm]() [series]() is the websockets part. But it's really, really simple:
+
+```
+type Msg
+    = EventReceived String
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    WebSocket.listen scoutEventsServer EventReceived
+```
+
+And now I just had to treat `EventReceived` messages in the `update` function.
+
+Now something I did not like: I felt like I had to do a lot of repeated code in the client and the server, mostly in the models. Mismatches between client and server models are a huge source of errors. Although I don't think it would happen here - after all, they are in the same project :) - I would have to update two pieces of code everytime the model need to change.
+
+[The complete code for the dashboard is here](https://github.com/lucasmreis/AmazingCookies/blob/master/src/Client/app/Dashboard.elm).
+
+## Final Conclusions
+
+In the end, I really enjoyed the experiment. Event though the languages look similar, I could see lots of differences between the two, mostly due Elm being a language looking for reliability in a narrow scope, and F# looking for pragmatism in a much larger scope.
+
+### Things Elm is superior to F#
+
+* *"One way to do it", and it's very well thought.* After grasping the Elm architecture, it seems I think each time more about the complexities of the problem itself and less about incidental implementation complexities.
+
+* *Elm is safer.* Elm's limitations to immutable data and pure functions makes everything safer in general. I cannot think of a way a runtime error can happen in an Elm app.
+
+* *Elm-format diminishes the cognitive load*. Auto formatting is much more powerful than I thought it would be! It's one more tool to make you focus on the important problems. Just spend some days using it with Elm and then come back to any other language without a formatter and you'll understand how much we gain when we are not thinking about code formatting.
+
+* *Better type signature syntax*. When one needs to write a function type signature, nothing beats Elm's (and for that matter Haskell's) signatures. I like stating the types in a different line than the function itself, and I even use it as a comment in some of my Javascript code, the way [RamdaJS uses it in its docs](http://ramdajs.com/0.22.1/docs/#repeat).
+
+### Things F# is superior to Elm
+
+* *F# is not focused in a single problem*. Basically you can use F# in almost any software domain, from web servers to web clients, from mobile apps to data science silos. So, knowledge gained in one domain, is knowledge brought to another.
+
+* *F# is super pragmatic*. If you want to deal with async problems, you can choose from native implementations of goroutines, actors or observables. You can tackle a problem using many different paradigms, and you have the whole .NET ecosystem at you disposal. In this sense, it feels as pragmatic as Clojure to me, and that tends to help a lot most of the time.
+
+* *Type inferring*. It just works, sometimes it feels like magic, and almost never gets in your way. Just start writing the function, and the compiler starts helping you. *Obs:* I found that a very good type inferring has one drawback: reading code on a web page. When you read code in an editor, you can always hover your mouse and it gives you information about everything, but when you don't have that tool to help you, code can be a little obscure to understand. That's not good when you are trying to understand a complicated piece of code on github.
+
+* *Tooling / compiler gives you a lot of information during development*. Elm's error messages are a gem. They are amazingly helpful, but I feel that F#'s compiler helps you more during development. You can basically hover your mouse over anything in your code and you get information about it.
+
+----> Things F# is superior to Elm
+ . "Many ways to do it", not always good
+ . F# is more pragmatic
+ . Type inferring is much better, and it influences a lot
+ . The tooling/compiler helps more; mouse gives info about everything you hover
+
+----> Things I learned in the process
+ . DDD, EventSourcing, CQRS is really the way to go for most business problems; dashboard had lot of read models from the same writes
+ . F# is a lot of ways felt like Clojure, which is a good thing. Same pragmatism
+ . Strong type systems like these are really, really powerful. Increases a lot reliability and safety of project
+
+----> Next steps
+ . Try Fable!
