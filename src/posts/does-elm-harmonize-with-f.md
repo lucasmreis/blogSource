@@ -260,16 +260,16 @@ In the end, I really enjoyed the experiment. Event though the languages look sim
 
 * *Tooling / compiler gives you a lot of information during development*. Elm's error messages are a gem. They are amazingly helpful, but I feel that F#'s compiler helps you more during development. You can basically hover your mouse over anything in your code and you get information about it.
 
-----> Things F# is superior to Elm
- . "Many ways to do it", not always good
- . F# is more pragmatic
- . Type inferring is much better, and it influences a lot
- . The tooling/compiler helps more; mouse gives info about everything you hover
+## Things I learned in the process
 
-----> Things I learned in the process
- . DDD, EventSourcing, CQRS is really the way to go for most business problems; dashboard had lot of read models from the same writes
- . F# is a lot of ways felt like Clojure, which is a good thing. Same pragmatism
- . Strong type systems like these are really, really powerful. Increases a lot reliability and safety of project
+I learned some valuable lessons in this process. First of all, in the language level, I learned a lot on how to use types better. ML-style languages make it easier to use types to actively make your code more reliable. I recommend reading [this blog post series](http://blog.ploeh.dk/2016/02/10/types-properties-software/) as a masterclass in "making illegal states unrepresentable". It's a very powerful and simple idea that consists in using the type system as way to maintain the application in a valid state 100% of the time. Another way of phrasing it is ["testing is good, but impossible is better"](https://twitter.com/splodingsocks/status/776523774183301120) :)
 
-----> Next steps
- . Try Fable!
+And second, in the architecture level, I learned about Event Sourcing and CQRS. Today, I really think that using event logs as first class citizens is the way to go in most situations. Even in this small project, I could feel the benefits: whenever I was coming up with a new way of visualizing the scouts information in the dashboard, I never had to change any schema, or any code in the backend. "Read models" are only different queries in the stored events.
+
+I feel that in a lot of companies, our main storage consists of "last states of a bunch of view models", and we spend a lot of money on different analytics, and log-managing tooling to deal with the really important business questions. If these companies already stored events, and treated them as they treat their main data, an imense value would be generated at a much lower cost.
+
+## Next Steps
+
+The repeated code between client and server made me curious about trying something more "unified", so I'll try some [Fable](https://fable-compiler.github.io/) for frontend programming.
+
+Also, I'll also try using more Event Sourcing whenever I can :)
