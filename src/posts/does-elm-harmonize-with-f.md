@@ -1,6 +1,6 @@
 ---
 title: Does Elm Harmonize With F#?
-lead: lkjlkjlkjlkjlkjlkjlkjlkj
+lead: Diving Into Another ML Language
 template: post.hbt
 date: 2016-09-09
 tags: elm, fsharp, functional, event-sourcing, real-time
@@ -14,17 +14,17 @@ After a quick research, the finalists were Haskell, Ocaml and F#. A former cowor
 
 ## Setting Up
 
-The first week with F# was not easy. I did not have any clue where to start since I don't have a Windows machine. So I downloaded Xamarin Studio, and used it for a couple of days. It's a good IDE with a so so editor, so I started looking for some alternative.
+The first week with F# was not easy. I did not have any clue where to start since I don't have a Windows machine. So I downloaded Xamarin Studio, and used it for a couple of days. It's a good IDE with a so so editor, so I started looking for some alternatives.
 
 Every F# project needs a `*.fsproj` config file, which is a big messy XML, that is not meant to be changed by "human beings" (as opposed to the simpler `package.json` from Node or `elm-package.json` from Elm). But it turns out that the F# open source community built some nice tools to deal with it. Summing up, install the [Ionide](http://ionide.io/) extension to VS Code or Atom, and everything will be easier.
 
-REWRITE: My programming workflow then became: use [Paket](https://github.com/fsprojects/Paket) to deal with the dependencies, and [Fake](http://fsharp.github.io/FAKE/) to deal with building tasks. F# has a REPL, and it's usual to have a `.fsx` script file around to send code to the REPL. Every module I wrote started in a `.fsx` file, and when I was happy with the results I would copy the code to a regular `.fs` file. I do not know if it's the ideal workflow, but it worked well!
+My programming workflow then became: just start coding something, and "send" little by little code to the REPL. Define some types, send to the REPL. Write a function, send to the REPL. Write some use cases, send to the REPL. It's exactly the same workflow I used with Clojure, and it leads to a lot of early feedback and agility from the beginning.
 
 With F# up and running, I decided to implement a simple project to learn the language.
 
 ## The Project
 
-My wife was a girl scout when she was a kid. She told me that there's a famous girl scout activity in the US which is selling cookies door to door to neighbours. I foud that extremely cute, and decided on implementing a girl scout cookie selling dashboard! :)
+My wife was a girl scout when she was a kid. She told me that there's a famous girl scout activity in the US which is selling cookies door to door to neighbours. I found that extremely cute, and decided on implementing a girl scout cookie selling dashboard! :)
 
 The requirements are: each scout somehow send commands like "Visit House" or "Sell 5 Cookies" to the server. The server validates the command, and broadcast events like "Maggie Just Visited A House" or "Lisa Just Sold 5 Cookies" to the dashboards, that are updated in realtime and consolidate all the information.
 
@@ -58,9 +58,9 @@ type ScoutError =
 
 A word about Commands and Events: when programming in Elm, "everything" that happened in the application was called a Message. The Update function understands the Messages, updates the state accordingly, and then emit or not new Messages.
 
-When reading about F#, I came accross lots of reading materials on Domain Driven Design (DDD), Event Sourcing and Command Query Responsibility Segregation (CQRS). One of the nice ideas I've read is the separation between Commands and Events among the Messages.
+When reading about F#, I came accross lots of reading materials on Domain Driven Design (DDD), Event Sourcing and Command Query Responsibility Segregation (CQRS). One of the nice ideas I've read is the *separation between Commands and Events* among the Messages.
 
-Everytime a user wants to change the domain, it issues a Command. If the Command actually changes the domain, an Event is generated. And Event represents things that actually happened to the domain. For example, if a scout issues a Command `Sell 3`, the server checks if it's a valid Command for the actual State, and if it's ok it issues an Event `Sold 3`. If it's not valid, let's say the scout was not visiting any house, it returns a `ShouldBeVisiting` error, and the State is not updated.
+Everytime a user wants to change the domain, it issues a Command. If the Command actually changes the domain, an Event is generated. An Event represents things that actually happened to the domain. For example, if a scout issues a Command `Sell 3`, the server checks if it's a valid Command for the actual State, and if it's ok it issues an Event `Sold 3`. If it's not valid, let's say the scout was not visiting any house, it returns a `ShouldBeVisiting` error, and the State is not updated.
 
 The cool part is that we can store all the Events, and query it at will. The present State is a replay of all the past Events! That's what Event Sourcing is all about, and I really recommend watching [every video you can](https://www.youtube.com/watch?v=8JKjvY4etTY) [from Greg Young](https://www.youtube.com/watch?v=kZL41SMXWdM), [the "father" of the Event Sourcing pattern](https://www.youtube.com/watch?v=LDW0QWie21s).
 
@@ -72,7 +72,7 @@ With that in mind, this is the final state machine representation of the scouts:
 
 ## A Simple Event Store
 
-The events produced by the server will need to be stored somewhere. To continue the learning experience, I decided to implement the simplest in-memory event store I could think of. It should be able to store every event, and also broadcast them to listeners, and that's it.
+The events produced by the server need to be stored somewhere. To continue the learning experience, I decided to implement the simplest in-memory event store I could think of. It should be able to store every event, broadcast them to listeners, and that's it.
 
 Since the store actually stores data, and this data is accessed through methods, I thought that modelling the store as an *object* would be ok. Yes, it's an object of the kind we try to escape with functional programming, but it still has it uses :)
 
@@ -92,9 +92,11 @@ type EventStore() =
 
 When instanced with `let store = new EventStore()`, this object creates an array of `String * ScoutEvent` tuples. This will hold all the events produced by the application, together with the scout's name that produced the event.
 
-F# has a very interesting feature called *computation expressions*. [The docs]() describe it as *a convenient syntax for writing computations that can be sequenced and combined using control flow constructs and bindings*. I do not know an easier way to describe it, so let me show two examples, `async` and `seq`:
+F# has a very interesting feature called *computation expressions*. [The docs](https://docs.microsoft.com/en-us/dotnet/articles/fsharp/language-reference/computation-expressions) describe it as *a convenient syntax for writing computations that can be sequenced and combined using control flow constructs and bindings*. I do not know an easier way to describe it, so let me show two examples, `async` and `seq`:
 
 ```fsharp
+// First example
+
 // this works just like Javascript's async/await,
 // or Clojure's core.async
 let asyncFetchedDocument = async {
@@ -107,6 +109,9 @@ let asyncFetchedDocument = async {
 
 let fetchedDocument =
     Async.RunSynchronously asyncFetchedDocument
+
+
+// Second example
 
 // this produces a lazy sequence
 let lazySeq = seq {
@@ -121,7 +126,7 @@ let list =
 
 ```
 
-I used a `query` computation expression to get all the events from a given name in the EventStore:
+In the event store I wrote, I used a `query` computation expression to get all the events from a given name in the EventStore:
 
 ```fsharp
 ...
@@ -156,7 +161,7 @@ So, to finish the EventStore, I needed a pub/sub to the saved events:
 ...
 ```
 
-The events will be published at `SaveEvent`, and saving an event will trigger the listeners. An example subscription would be:
+The events are published at `SaveEvent`, and saving an event triggers the listeners. An example subscription would be:
 
 ```fsharp
 
@@ -170,7 +175,7 @@ store.SaveEvent.Add(logger)
 
 ## A Server
 
-Years ago I worked with C#, and wrote a server with ASP.NET MVC. I thought I was going to write the server using F#/C# "interop" (and was not very happy about it :) ). How glad I was to come accross an "F# native" web server framework called [Suave](https://suave.io/). Suave in portuguese means *smooth*, and that's exactly how it feels to write a server with it!
+Years ago I worked with C#, and wrote a server with ASP.NET MVC. In this project, I thought I was going to write the server using F#/C# "interop" (and was not very happy about it :) ). How glad I was to come accross an "F# native" web server framework called [Suave](https://suave.io/). Suave in portuguese means *smooth*, and that's exactly how it feels to write a server with it!
 
 For instance, look at the final code for the server:
 
@@ -215,7 +220,8 @@ It's a computation expression! Gotta love those.
 
 After implementing all those F#, it was time to come back to Elm. The dashboard architecture was simple: the app listens for events through the native websockets implementation, and it drives the standard Elm architecture. That's how the final result looks like (notice I'm using Postman to send the scouts command to the server):
 
--- ANIMATED GIF --
+![Event Source A](../assets/event-source-a.gif)
+![Event Source B](../assets/event-source-b.gif)
 
 One of the best part of Elm is that the structure of the code does not seem to change from application to application I write. The "framework" part of it is so close to the language itself, that one simply does not try to do things in a different way - and I don't even think it's possible. That way we can focus more on the real complexity of the problem, and think less and less about implementation details.
 
@@ -232,13 +238,13 @@ subscriptions model =
 
 And now I just had to treat `EventReceived` messages in the `update` function.
 
-Now something I did not like: I felt like I had to do a lot of repeated code in the client and the server, mostly in the models. Mismatches between client and server models are a huge source of errors. Although I don't think it would happen here - after all, they are in the same project :) - I would have to update two pieces of code everytime the model need to change.
+Now something I did not like: I felt like I had to do a lot of repeated code in the client and the server, mostly in the models. Mismatches between client and server models are a huge source of errors. Although I don't think it would happen here - after all, they are in the same project :) - I would have to update two pieces of code everytime the model needed to change.
 
 [The complete code for the dashboard is here](https://github.com/lucasmreis/AmazingCookies/blob/master/src/Client/app/Dashboard.elm).
 
 ## Final Conclusions
 
-In the end, I really enjoyed the experiment. Event though the languages look similar, I could see lots of differences between the two, mostly due Elm being a language looking for reliability in a narrow scope, and F# looking for pragmatism in a much larger scope.
+In the end, I really enjoyed the experiment. Even though the languages look similar, I could see lots of differences between the two, mostly due Elm being a language looking for reliability in a narrow scope, and F# looking for pragmatism in a much larger scope.
 
 ### Things Elm is superior to F#
 
