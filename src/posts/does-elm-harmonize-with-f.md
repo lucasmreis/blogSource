@@ -225,7 +225,7 @@ After implementing all those F#, it was time to come back to Elm. The dashboard 
 
 One of the best part of Elm is that the structure of the code does not seem to change from application to application I write. The "framework" part of it is so close to the language itself, that one simply does not try to do things in a different way - and I don't even think it's possible. That way we can focus more on the real complexity of the problem, and think less and less about implementation details.
 
-The only different part from my [earlier]() [learning Elm]() [series]() is the websockets part. But it's really, really simple:
+The only different part from my [earlier](http://lucasmreis.github.io/blog/learning-elm-part-1/) [learning Elm](http://lucasmreis.github.io/blog/learning-elm-part-2/) [series](http://lucasmreis.github.io/blog/learning-elm-part-3/) is the websockets part. But it's really, really simple:
 
 ```
 type Msg
@@ -264,13 +264,13 @@ In the end, I really enjoyed the experiment. Even though the languages look simi
 
 * *Type inferring*. It just works, sometimes it feels like magic, and almost never gets in your way. Just start writing the function, and the compiler starts helping you. *Obs:* I found that a very good type inferring has one drawback: reading code on a web page. When you read code in an editor, you can always hover your mouse and it gives you information about everything, but when you don't have that tool to help you, code can be a little obscure to understand. That's not good when you are trying to understand a complicated piece of code on github.
 
-* *Tooling / compiler gives you a lot of information during development*. Elm's error messages are a gem. They are amazingly helpful, but I feel that F#'s compiler helps you more during development. You can basically hover your mouse over anything in your code and you get information about it.
+* *Tooling / compiler gives you a lot of information during development*. Elm's error messages are a gem. They are amazingly helpful, but I feel that F#'s compiler helps you *more* during development. You can basically hover your mouse over anything in your code and you get information about it.
 
 ## Things I learned in the process
 
 I learned some valuable lessons in this process. First of all, in the language level, I learned a lot on how to use types better. ML-style languages make it easier to use types to actively make your code more reliable. I recommend reading [this blog post series](http://blog.ploeh.dk/2016/02/10/types-properties-software/) as a masterclass in "making illegal states unrepresentable". It's a very powerful and simple idea that consists in using the type system as way to maintain the application in a valid state 100% of the time. Another way of phrasing it is ["testing is good, but impossible is better"](https://twitter.com/splodingsocks/status/776523774183301120) :)
 
-And second, in the architecture level, I learned about Event Sourcing and CQRS. Today, I really think that using event logs as first class citizens is the way to go in most situations. Even in this small project, I could feel the benefits: whenever I was coming up with a new way of visualizing the scouts information in the dashboard, I never had to change any schema, or any code in the backend. "Read models" are only different queries in the stored events.
+And second, in the architecture level, I learned about Event Sourcing and CQRS. Today, I really think that *using event logs as first class citizens is the way to go in most situations*. Even in this small project, I could feel the benefits: whenever I was coming up with a new way of visualizing the scouts information in the dashboard, I never had to change any schema, or any code in the backend. "Read models" are only different queries in the stored events.
 
 I feel that in a lot of companies, our main storage consists of "last states of a bunch of view models", and we spend a lot of money on different analytics, and log-managing tooling to deal with the really important business questions. If these companies already stored events, and treated them as they treat their main data, an imense value would be generated at a much lower cost.
 
