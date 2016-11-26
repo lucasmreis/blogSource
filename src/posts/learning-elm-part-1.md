@@ -7,7 +7,11 @@ tags: functional, types, elm
 draft: false
 ---
 
-*This is part 1 of a series. You can read [part 2 here](http://lucasmreis.github.io/blog/learning-elm-part-2/).*
+*This is part 1 of a series:*
+
+* [Part 2: Understanding The Benefits Of A Strong Type System](http://lucasmreis.github.io/blog/learning-elm-part-1/)
+* [Part 3: Building A Real Application](http://lucasmreis.github.io/blog/learning-elm-part-3/)
+* [Part 4: Property Based Testing And Better Modelling](http://lucasmreis.github.io/blog/learning-elm-part-4/)
 
 A big concern when working with Javascript is *reliability*. Reliability in the sense of being completely sure about what a piece of code does, and knowing that changing one part won't break another part. A key concept is *error feedback cycle*: how soon can you catch errors in your code?
 
@@ -342,7 +346,7 @@ Now the function that takes this tuple and returns a Maybe Card:
 ```
 parseCardTuple : (Maybe String, Maybe Char) -> Maybe Card
 parseCardTuple (value, suit) =
-  case (value `Maybe.andThen` parseValue, suit `Maybe.andThen` parseSuit) of
+  case ( value |> Maybe.andThen parseValue, suit |> Maybe.andThen parseSuit ) of
     (Just v, Just s) ->
       Just (v, s)
 
@@ -462,7 +466,7 @@ It handles the case `"J"` separately, and calls our previous function if it's no
 ```
 parseCardTuple : (Maybe String, Maybe Char) -> Maybe Card
 parseCardTuple (value, suit) =
-  case (value `Maybe.andThen` parseValue, suit `Maybe.andThen` parseSuit) of
+  case ( value |> Maybe.andThen parseValue, suit |> Maybe.andThen parseSuit ) of
     (Just v, Just s) ->
       Just (OrdinaryCard v s) -- not a tuple
 

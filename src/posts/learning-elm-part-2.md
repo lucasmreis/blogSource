@@ -7,7 +7,11 @@ tags: functional, types, elm
 draft: false
 ---
 
-*This is part 2 of a series. You can read [part 1 here](http://lucasmreis.github.io/blog/learning-elm-part-1/).*
+*This is part 2 of a series:*
+
+* [Part 1: Understanding The Benefits Of A Simple Architecture](http://lucasmreis.github.io/blog/learning-elm-part-2/)
+* [Part 3: Building A Real Application](http://lucasmreis.github.io/blog/learning-elm-part-3/)
+* [Part 4: Property Based Testing And Better Modelling](http://lucasmreis.github.io/blog/learning-elm-part-4/)
 
 As I stated in part 1 of this series, I started learning Elm in a quest for more reliability in web front end programming. I implemented an algorithm, a parser, and things went very well.
 
@@ -130,11 +134,8 @@ After rendering, the application "waits" for user interaction or any other event
 Elm gives us a function that does all the "plumbing" for us, and it's called `Html.App.program`. We'll use a simpler version of it, because that's everything we need for our small app, and it's called `beginnerProgram`. With it, you only need to define your model, update and view and the program does the heavy work for you:
 
 ```
-import Html.App exposing (beginnerProgram)
-
-
 main =
-    Html.App.beginnerProgram
+    Html.beginnerProgram
         { model = init ""
         , view = view
         , update = update
@@ -257,12 +258,12 @@ Let's first create a new file called `ParserComponent.elm`, and move all the mod
 ```
 module Main exposing (..)
 
-import Html.App exposing (beginnerProgram)
+import Html exposing (beginnerProgram)
 import ParserComponent exposing (Model, Msg, init, view, update)
 
 
 main =
-    Html.App.beginnerProgram
+    Html.beginnerProgram
         { model = ParserComponent.init ""
         , view = ParserComponent.view
         , update = ParserComponent.update
@@ -306,15 +307,15 @@ Now let's see how to actually tag those messages in the new view:
 ```
 view model =
     div []
-        [ Html.App.map First
+        [ Html.map First
             (ParserComponent.view model.firstParser)
-        , Html.App.map Second
+        , Html.map Second
             (ParserComponent.view model.secondParser)
         ]
 
 ```
 
-By using the `Html.App.map` we tag, with the first parameter, every message that is sent by the view rendered in the second parameter.
+By using the `Html.map` we tag, with the first parameter, every message that is sent by the view rendered in the second parameter.
 
 We are rendering a ParserComponent view with the `firstParser` portion of the model, and another with the `secondParser`, and we are tagging all the messages sent by the first with `First`, and all the messages sent by the second with `Second`.
 

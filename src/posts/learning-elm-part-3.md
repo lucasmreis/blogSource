@@ -7,7 +7,13 @@ tags: functional, types, elm
 draft: false
 ---
 
-*This is part 3 of a series. Click here to read [part 1](http://lucasmreis.github.io/blog/learning-elm-part-1/) and [part 2](http://lucasmreis.github.io/blog/learning-elm-part-2/).*
+*This is part 3 of a series:*
+
+* [Part 1: Understanding The Benefits Of A Simple Architecture](http://lucasmreis.github.io/blog/learning-elm-part-2/)
+* [Part 2: Understanding The Benefits Of A Strong Type System](http://lucasmreis.github.io/blog/learning-elm-part-1/)
+* [Part 4: Property Based Testing And Better Modelling](http://lucasmreis.github.io/blog/learning-elm-part-4/)
+
+*Obs: the code in this post is not compatible with Elm version 0.18 on. I'm planning on updating it soon!*
 
 It's time for some interaction with APIs! *Now* we can say that we're building an actual web application, and we'll really be putting Elm to the test.
 
