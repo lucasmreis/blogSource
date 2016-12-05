@@ -215,6 +215,42 @@ The Film module is then very similar:
 
 ## The Application Model
 
+Let's now define the application model:
+
+```fsharp
+type Model =
+    | InitialScreen
+    | LoadingFilms of Character.Model
+    | LoadingCharacters of Film.Model
+    | FilmsFromCharacter of Character.Model * Film.Model list
+    | CharactersFromFilm of Film.Model * Character.Model list
+    | ErrorScreen
+```
+
+To the readers not familiar with Elm or any other ML-inspired language, this is a *discriminated union*. It's basically a list of possible values that a variable of this type can have, along with a description of the state that that value can hold.
+
+For instance, let's describe this simple discriminated union type:
+
+```fsharp
+type SelectedFile =
+    | File of string
+    | NotFound
+```
+
+We can then define variables like:
+
+```fsharp
+let a = File "some-file.txt"
+let b = NotFound
+```
+
+Both of the above variables have the `SelectedFile` type.
+
+I describe more of it in my [part one of Learning Elm series](http://lucasmreis.github.io/blog/learning-elm-part-1/). Here's also a [great article on F# discriminated unions](https://fsharpforfunandprofit.com/posts/discriminated-unions/).
+
+
+
+
 
 . Json Encoders / Decoders
 
