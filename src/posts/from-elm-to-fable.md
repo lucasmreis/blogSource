@@ -53,7 +53,9 @@ $ npm init
 $ npm install --save fable-core fable-compiler
 ```
 
-Now we can write a fsharp file, let's say in `src/Main.fsx`:
+Before writing the first F# file, please install the [Ionide extension](http://ionide.io/) to VS Code or Atom. It is very powerful, and makes the developing experience very pleasurable. The compiler realtime help is even *better* than Elm's! I'll talk more about this is the conclusion.
+
+Now we can write a F# file, let's say in `src/Main.fsx`:
 
 ```fsharp
 #r "../node_modules/fable-core/Fable.Core.dll"
@@ -335,6 +337,117 @@ Now we can add the Rollup CommonJS configuration:
   }
 }
 ```
+
+This step is a small complication in our build system. It's definitely more complex than anything related to an Elm project build, but, on the other hand, it's the effect of using a very good and used *Javascript* tool. Efficient bundles are a central an important issue in frontend projects, and since we cannot escape from it, I actually like that we are using a good tool for that.
+
+## Messages And The Rest Of The Views
+
+Before building the other views, let's define the application Messages. As a reminder: a message is a description of a user action or an event that happens in the application. It is a model of the state *transitions*. Converting the original messages we have:
+
+```fsharp
+type Msg
+    = LoadCharacters of Film.Model
+    | ToCharactersFromFilm of Film.Model * Character.Model list
+    | LoadFilms of Character.Model
+    | ToFilmsFromCharacter of Character.Model * Film.Model list
+    | FetchFail
+```
+
+Remember that both Character's and Film's have a `onMouseClick (fun _ -> model)` attribute. This means that the views emit a message of type `Model` when clicked. So, let's *map* those views to views that emit messages of type `Msg`:
+
+```fsharp
+let mappedCharacterView model =
+    let characterView = Character.view model
+    Html.map LoadFilms characterView
+
+let mappedFilmView model =
+    let filmView = Film.view model
+    Html.map LoadCharacters filmView
+```
+
+Let's, just for fun, refactor `mappedCharacterView`. First of all, we can identify a *pipeline* there: we transform our model with the `view` function and then we map it to `LoadFilms` message. That translates directly to code:
+
+```fsharp
+let mappedCharacterView model =
+    model
+    |> Character.view
+    |> Html.map LoadFilms
+```
+
+Which is already simple and clear. There's another F# operator, the `>>`. It composes two functions into another one, in the same order as `|>`. The next rewrite has the same behavior:
+
+```fsharp
+let mappedCharacterView model =
+    let transform = Character.view >> Html.map LoadFilms
+    transform model
+```
+
+When I see a function like that, I immediately think that `model` and `transform` are temporary variables that do not add a lot to readability. So I think this is a nice case where a [point free function]() is simple:
+
+```fsharp
+let mappedCharacterView =
+    Character.view >> Html.map LoadFilms
+
+let mappedFilmView =
+    Film.view >> Html.map LoadCharacters
+```
+
+And now we can convert the rest of the views of the application:
+
+```fsharp
+let view model =
+    match model with
+    | InitialScreen ->
+        messageView "Loading amazing characters and films..."
+
+    | LoadingFilms ch ->
+        div [ Style [ "display", "flex" ] ]
+            [ mappedCharacterView ch
+              messageView ("Loading " + ch.name + " films...") ]
+
+    | FilmsFromCharacter (ch, fs) ->
+        let filmsView = List.map mappedFilmView fs
+        div [ Style [ "display", "flex" ] ]
+            [ mappedCharacterView ch
+              div [] filmsView ]
+
+    | LoadingCharacters f ->
+        div [ Style [ "display", "flex" ] ]
+            [ mappedFilmView f
+              messageView ("Loading " + f.title + " characters...") ]
+
+    | CharactersFromFilm (f, chs) ->
+        let chsView = List.map mappedCharacterView chs
+        div [ Style [ "display", "flex" ] ]
+            [ mappedFilmView f
+              div [] chsView ]
+
+    | ErrorScreen ->
+        messageView "An error ocurred. Please refresh the page and try again - and may the Force be with you!"
+```
+
+The syntax is very clean. I like not having to use commas when changing lines, and don't mind the occasional parenthesis. I love Elm Format and how it formats your code automatically - F# doesn't have it, but I don't feel a loose a lot of time with code formatting to get a good look and feel.
+
+Now we can try the views with "mock" application states, for instance:
+
+```fsharp
+let char:Character.Model =
+    { name = "Luke Skywalker" ; films = [] }
+
+let film:Film.Model =
+    { title = "A New Hope" ; episodeId = 4 ; characters = [] }
+
+let initialModel =
+    FilmsFromCharacter ( char , [ film ; film ; film ] )
+```
+
+Run `fable && http-server` and reload the browser, and there you see it!
+
+## The Update Function And Async Work
+
+Fable Arch resembles Elm in the sense that the `update` function returns a new model and a list of "actions". Actions are functions that receive a `handler` callback parameter; `handler` is a function that receives a `Msg` and feeds it back to the update function.
+
+Let's start with the initial work of the application: getting a character from the API, and transitioning from `Initial Screen` to `LoadingFilms of Character.Model`. 
 
 
 
