@@ -345,15 +345,61 @@ This step is a small complication in our build system. It's definitely more comp
 Before building the other views, let's define the application Messages. As a reminder: a message is a description of a user action or an event that happens in the application. It is a model of the state *transitions*. Converting the original messages we have:
 
 ```fsharp
-type Msg
-    = LoadCharacters of Film.Model
+type Msg =
+    | LoadCharacters of Film.Model
     | ToCharactersFromFilm of Film.Model * Character.Model list
     | LoadFilms of Character.Model
     | ToFilmsFromCharacter of Character.Model * Film.Model list
     | FetchFail
 ```
 
-Remember that both Character's and Film's have a `onMouseClick (fun _ -> model)` attribute. This means that the views emit a message of type `Model` when clicked. So, let's *map* those views to views that emit messages of type `Msg`:
+Now let's write one more case for the main view function: 
+
+```fsharp
+let view model =
+    match model with
+    | InitialScreen ->
+        messageView "Loading amazing characters and films..."
+
+    | LoadingFilms ch ->
+        div [ Style [ "display", "flex" ] ]
+            [ Character.view ch
+              messageView ("Loading " + ch.name + " films...") ]
+```
+
+`LoadingFilms` shows one character and is waiting for the related films to load. If you hover on the `view` function declaration - or if you are using Ionide it's already showing - you'll see that the function type signature is:
+
+```fsharp
+Model -> DomNode<Character.Model>
+```
+
+That means that `view` is a function that receives a Model and sends messages of type `Character.Model`. This occurs because of the attribute `onMouseClick (fun _ -> model)` we wrote in the `Character.view` that we are calling in this function.
+
+The thing is, we want to send messages of the type `Msg` we just defined. An error occurs if we add the `FilmsFromCharacter` case, that calls `Film.view`:
+
+```fsharp
+(...)
+
+    | FilmsFromCharacter (ch, fs) ->
+        let filmsView = List.map Film.view fs
+        div [ Style [ "display", "flex" ] ]
+            [ Character.view ch
+              div [] filmsView ]
+```
+
+```bash
+$ fable
+[ERROR] F# project contains errors:
+Type mismatch. Expecting a
+    'DomNode<Character.Model> list'    
+but given a
+    'DomNode<Film.Model> list'    
+The type 'Character.Model' does not match the type 'Film.Model'
+```
+
+So, `Film.view` send messages of type `Film.Model` and that is not compatible with `Character.Model` which was the message being sent by the function before we wrote the case. This is a great example of the power of F#'s type inference. I don't know if you noticed, but we did not write any type signature so far :) It's rarely needed in F#, and I still feel the same type power and safety that I felt in Elm. 
+
+To make sure that our main `view` only produces messages of type `Msg`, we need to *map* both the Character's and Film's `view` functions to produce it:
 
 ```fsharp
 let mappedCharacterView model =
@@ -365,7 +411,7 @@ let mappedFilmView model =
     Html.map LoadCharacters filmView
 ```
 
-Let's, just for fun, refactor `mappedCharacterView`. First of all, we can identify a *pipeline* there: we transform our model with the `view` function and then we map it to `LoadFilms` message. That translates directly to code:
+Now, just for fun, let's refactor `mappedCharacterView`. First of all, we can identify a *pipeline* there: we transform our model with the `view` function and then we map it to `LoadFilms` message. That translates directly to code:
 
 ```fsharp
 let mappedCharacterView model =
@@ -392,7 +438,7 @@ let mappedFilmView =
     Film.view >> Html.map LoadCharacters
 ```
 
-And now we can convert the rest of the views of the application:
+And now we can convert all the views of the application:
 
 ```fsharp
 let view model =
@@ -449,18 +495,209 @@ Fable Arch resembles Elm in the sense that the `update` function returns a new m
 
 Let's start with the initial work of the application: getting a character from the API, and transitioning from `Initial Screen` to `LoadingFilms of Character.Model`. 
 
+We'll get the entities from the [Star Wars API](https://swapi.co/), so we need to use the browser fetch function. There's a library called [fable-powerpack](https://github.com/fable-compiler/fable-powerpack) that makes it easier to use both fetch and promises with fable:
+
+```bash
+$ npm install --save fable-powerpack
+```
+
+And then we can use in our project:
+
+```fsharp
+#r "../node_modules/fable-powerpack/Fable.PowerPack.dll"
+
+(...)
+
+open Fable.PowerPack
+open Fable.PowerPack.Fetch
+
+(...)
+
+let fetchEntity url =
+    promise {
+        let! fetched = fetch url []
+        let! response = fetched.text()
+        return response }
+
+```
+
+`promise { ... }` is a F# *computation expression*. There's nothing like it in Elm - it's kind of a ES6 generator, or ES7 async/await. Inside the promise block, code is written sequentially, but runs asynchronously. If you define a promise variable using `let!`, it will wait for the promise to resolve *without blocking the thread*, and then continue running the code. The code above could be loosely translated to Javascript as:
+
+```js
+// using promises:
+const fetchEntity = url => fetch(url, {}).then(r => r.text())
+
+// using async/await:
+const fetchEntity = url => {
+  const fetched = await fetch(url, {})
+  const response = await fetched.text()
+  return response
+}
+```
+
+The only difference is that promises runs as soon as they are defined, and computation expression run only when they are actually used. I find it to be better behaviour, and more compatible with the more "famous" F#'s `async { ... }`.
+
+The inferred type is `string -> Promise<string>`, but we want the function to return either a Character or a Film model. So we need a `string -> Character.Model` and a `string -> Film.Model` parse functions. So, inside the Character module:
+
+```fsharp
+open Fable.Core.JsInterop
+
+(...)
+
+module Character =
+
+    (...)
+
+    let parse str =
+        try
+            let obj = ofJson<Model> str
+            Some obj
+        with _ -> None
+```
+
+I created a record type for the json, so I could use the function `ofJson<'a>` to convert a string by finding the json keys that are equivalent to `'a` keys. Then, if everything goes well, I return a `Model option` (Options in F# are equivalent to Maybes in Elm). So, `parse`'s type signature is `string -> Character.Model option`. We can do the same for Film:
+
+```fsharp
+module Film =
+
+    (...)
+    
+    type ModelJSON =
+        { title: string
+          episode_id: int
+          characters: string list }
+
+    let parse str =
+        try
+            let obj = ofJson<ModelJSON> str
+            Some
+                { title = obj.title
+                  episodeId = obj.episode_id
+                  characters = obj.characters }
+        with _ -> None
+```
+
+Since the Model did not have the same keys as the json returned from the API, I created a `ModelJSON` type to use only with the `ofJson` function, and then build the model key by key.
+
+This is the part of the code I'm less happy with. If any of you know about a better and more reliable `string -> 'a option` function, please share it in the comments!
+
+We can now change our `fetchEntity` function to receive a parser:
+
+```fsharp
+let fetchEntity url parser =
+    promise {
+        let! fetched = fetch url []
+        let! response = fetched.text()
+        return response |> parser }
+```
+
+And we can write the `getCharacter` function that fetches the first character of the application:
+
+```fsharp
+let getCharacter handler =
+    promise {
+        try
+            let! character = fetchEntity "http://swapi.co/api/people/1/" Character.parse
+            return
+                match character with
+                | Some ch -> LoadFilms ch
+                | None -> FetchFail
+        with e ->
+            return FetchFail }
+    |> Promise.map handler
+    |> ignore
+```
+
+It receives `handler` as a parameter, which is a function that will receive a `Msg` and feed it back to the appication. `ignore` is just a function that returns `unit`, which is F#'s "void". 
+
+The handler is receiving both `LoadFilms` and `FetchFail` messages, so let's implement an initial update function that changes the application state properly, and also call `getCharacter` in `createApp`:
+
+```fsharp
+let update model msg =
+    match msg with
+    | LoadFilms ch -> LoadingFilms ch , []
+    | FetchFail -> ErrorScreen , []
+    | _ -> model , []
+
+(...)
+
+createApp InitialScreen view update Virtualdom.createRender
+|> withStartNodeSelector "#app"
+|> withInitMessage getCharacter
+|> start
+```
+
+If we run the application, we'll be able to see the initial screen transitioning to the next screen with real info from the API!
+
+Now the last two functions: `getCharacters` and `getFilms`, that get all the related entities of a character or a film:
+
+```fsharp
+let getCharacters (film: Film.Model) handler =
+    film.characters
+        |> List.map ( fun url -> promise {
+            try
+                return! fetchEntity url Character.parse
+            with e ->
+                return None } )
+        |> Promise.Parallel
+        |> Promise.map (
+            Array.choose id
+            >> Array.toList
+            >> fun chs -> ToCharactersFromFilm (film, chs)
+            >> handler )
+        |> ignore
+```
+
+This function fetchs all the entities in parallel, converts the `Character.Model option []` that result from `Parallel` to a `Character.Model list`, build a `ToCharactersFromFilm` message and calls `handler`. As they say in Math books, "understanding the details of this pipeline is left as an exercise to the reader" ;) 
+
+`getFilms` is almost mirrored:
+
+```fsharp
+let getFilms (character: Character.Model) handler =
+    character.films
+        |> List.map ( fun url -> promise {
+            try
+                return! fetchEntity url Film.parse
+            with e ->
+                return None } )
+        |> Promise.Parallel
+        |> Promise.map (
+            Array.choose id
+            >> Array.toList
+            >> fun fs -> ToFilmsFromCharacter (character, fs)
+            >> handler )
+        |> ignore
+```
+
+Now we finish our update (notice the side effects listed!):
+
+```fsharp
+let update model msg =
+    match msg with
+    | LoadCharacters f ->
+        LoadingCharacters f , [ getCharacters f ]
+
+    | ToCharactersFromFilm ( f , chs ) ->
+        CharactersFromFilm ( f , chs ), []
+
+    | LoadFilms ch ->
+        LoadingFilms ch , [ getFilms ch ]
+
+    | ToFilmsFromCharacter ( ch , fs ) ->
+        FilmsFromCharacter ( ch , fs ), []
+
+    | FetchFail ->
+        ErrorScreen , []
+```
+
+And that's it - the application is done, and running without any error. That's the sensation you have only with a good compiled language: code running and working at the same time, from the beginning.
+
+## Bonus: Refactoring! 
+
+
+Differences from the Elm version: first of all, in Elm's defense, even though it's very "boilerplatey", the json parsing felt more robust and safe than what I did with Fable. And, as a positive point to Fable, the async work is much faster, since it was really easy to send all the requests in parallel.
 
 
 
 
-. Json Encoders / Decoders
 
-. Talk about type inference
-
-. Side effects: list of callbacks
-
-. fetch: just a JS function
-
-. Refactoring: one Entity model (could be done in Elm)
-
-. Simple, relatively easy, still reliable, performant
