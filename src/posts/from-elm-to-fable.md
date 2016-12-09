@@ -591,10 +591,10 @@ let fetchEntity url parser =
         return response |> parser }
 ```
 
-And we can write the `getCharacter` function that fetches the first character of the application:
+And we can write the `getFirstCharacter` function that fetches the first character of the application:
 
 ```fsharp
-let getCharacter handler =
+let getFirstCharacter handler =
     promise {
         try
             let! character = fetchEntity "http://swapi.co/api/people/1/" Character.parse
@@ -623,7 +623,7 @@ let update model msg =
 
 createApp InitialScreen view update Virtualdom.createRender
 |> withStartNodeSelector "#app"
-|> withInitMessage getCharacter
+|> withInitMessage getFirstCharacter
 |> start
 ```
 
@@ -693,6 +693,105 @@ let update model msg =
 And that's it - the application is done, and running without any error. That's the sensation you have only with a good compiled language: code running and working at the same time, from the beginning.
 
 ## Bonus: Refactoring! 
+
+There's one thing that I really don't like in this solution: the amount of "almost duplicate" code related to Characters and Films. I feel I'm writing everything twice. I think it came from thinking that Character and Film should be separate modules, and I could not figure out at the time a way to have "generic" modules or something of the sort. So I'll try now to make it better, and find a better abstraction for Character and Film that does not result in "almost duplicate" code.
+
+I'll start by defining the models of the entities:
+
+```fsharp
+type Url = string
+
+type Details =
+    | Character of name: string
+    | Film of title: string * episode: string
+
+type Entity =
+    { related : Url list
+      details : Details }
+```
+
+An entity have a generic list of related entities, and a `Details` property that holds the actual characteristics of a film or a character. Now that we have a generic entity type, we can simplify the application model:
+
+```fsharp
+type Model =
+    | InitialScreen
+    | Loading of Entity
+    | List of Entity * Entity list
+    | ErrorScreen
+```
+
+And we can parse the json using the function:
+
+```fsharp
+type ResponseJson =
+    { name : string
+      title : string
+      episode_id : string
+      characters : string list
+      films : string list }
+
+let parse json =
+    let obj = ofJson<ResponseJson> json
+    if String.IsNullOrEmpty obj.name then
+        { related = obj.characters
+          details = Film ( obj.title , obj.episode_id ) }
+    else
+        { related = obj.films
+          details = Character obj.name }
+```
+
+For the parser, I convert the json to a `ResponseJson`, and check if the key `name` holds any value. If it does, it's a character, if it doesn't, it's a film. (I'm still not happpy with the json parsing, but it's working well for this API)
+
+Next, let's deal with the application update part. The messages can be simplified too:
+
+```fsharp
+type Msg
+    = Load of Entity
+    | ToList of Entity * Entity list
+    | FetchFail
+```
+
+`getFirstCharacter` is very similar:
+
+```fsharp
+let fetchEntity (url:Url) =
+    promise {
+        let! fetched = fetch url []
+        let! response = fetched.text()
+        return parse response }
+
+let getFirstCharacter handler =
+    promise {
+        let! entity = fetchEntity "http://swapi.co/api/people/2/"
+        return Load entity }
+    |> Promise.map handler
+    |> ignore
+```
+
+And now we only need one `getRelatedEntities` instead of `getCharacters` and `getFilms`:
+
+```fsharp
+let getRelatedEntities (entity:Entity) handler =
+    List.map fetchEntity entity.related
+    |> Promise.Parallel
+    |> Promise.map ( fun list -> ToList ( entity , List.ofArray list ) )
+    |> Promise.map handler
+    |> ignore
+```
+
+And our `update` function got much simpler:
+
+```fsharp
+let update model msg =
+    match msg with
+    | Load entity -> Loading entity , [ getRelatedEntities entity ]
+    | ToList ( entity , list ) -> List ( entity , list ) , []
+    | FetchFail -> ErrorScreen , []
+```
+
+
+
+
 
 
 Differences from the Elm version: first of all, in Elm's defense, even though it's very "boilerplatey", the json parsing felt more robust and safe than what I did with Fable. And, as a positive point to Fable, the async work is much faster, since it was really easy to send all the requests in parallel.
