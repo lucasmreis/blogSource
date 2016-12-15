@@ -2,9 +2,8 @@
 title: From Elm To Fable
 lead: Trying F# In The Frontend
 template: post.hbt
-date: 2016-04-22
-tags: functional, types, elm
-draft: false
+date: 2016-12-10
+tags: functional, types, elm, fsharp
 ---
 
 Some months ago I started a [quest to gain reliability in frontend development](http://lucasmreis.github.io/blog/learning-elm-part-1/). I chose Elm as the starting point, from this list:
@@ -537,49 +536,48 @@ const fetchEntity = url => {
 
 The only difference is that promises runs as soon as they are defined, and computation expression run only when they are actually used. I find it to be better behaviour, and more compatible with the more "famous" F#'s `async { ... }`.
 
-The inferred type is `string -> Promise<string>`, but we want the function to return either a Character or a Film model. So we need a `string -> Character.Model` and a `string -> Film.Model` parse functions. So, inside the Character module:
+The inferred type is `string -> Promise<string>`, but we want the function to return either a Character or a Film model. So we need a `string -> Character.Model` and a `string -> Film.Model` parse functions. So, inside the Film module:
 
 ```fsharp
 open Fable.Core.JsInterop
 
 (...)
 
-module Character =
-
-    (...)
-
-    let parse str =
-        try
-            let obj = ofJson<Model> str
-            Some obj
-        with _ -> None
-```
-
-I created a record type for the json, so I could use the function `ofJson<'a>` to convert a string by finding the json keys that are equivalent to `'a` keys. Then, if everything goes well, I return a `Model option` (Options in F# are equivalent to Maybes in Elm). So, `parse`'s type signature is `string -> Character.Model option`. We can do the same for Film:
-
-```fsharp
 module Film =
+    type Model =
+        { title: string
+          episodeId: int
+          characters: string list }
 
-    (...)
-    
     type ModelJSON =
         { title: string
           episode_id: int
           characters: string list }
 
     let parse str =
-        try
-            let obj = ofJson<ModelJSON> str
-            Some
-                { title = obj.title
-                  episodeId = obj.episode_id
-                  characters = obj.characters }
-        with _ -> None
+        let obj = ofJson<ModelJSON> str
+        { title = obj.title
+          episodeId = obj.episode_id
+          characters = obj.characters }
+
+    (...)
 ```
 
-Since the Model did not have the same keys as the json returned from the API, I created a `ModelJSON` type to use only with the `ofJson` function, and then build the model key by key.
+I created a record type for the json, so I could use the function `ofJson<'a>` to convert a string by finding the json keys that are equivalent to `'a` keys. Then it just builds a regular `Film.Model` with the result.
 
-This is the part of the code I'm less happy with. If any of you know about a better and more reliable `string -> 'a option` function, please share it in the comments!
+This function has the signature `string -> Film.Model`, but, if there's any error in the process, it *raises an exception*. I'm not an exception fan (it's not explicit in the type signature!), but it'll work here because we'll put it inside a promise computation expression, and it will behave just like in Javascript: it will *reject*, and we'll treat it in a `Promise.catch` expression.
+
+The Character module ended up being much simpler:
+
+```fsharp
+module Character =
+
+    (...)
+    
+    let parse = ofJson<Model>
+```
+
+Since `Model` already mirrors the json schema of the API :)
 
 We can now change our `fetchEntity` function to receive a parser:
 
@@ -595,15 +593,9 @@ And we can write the `getFirstCharacter` function that fetches the first charact
 
 ```fsharp
 let getFirstCharacter handler =
-    promise {
-        try
-            let! character = fetchEntity "http://swapi.co/api/people/1/" Character.parse
-            return
-                match character with
-                | Some ch -> LoadFilms ch
-                | None -> FetchFail
-        with e ->
-            return FetchFail }
+    fetchEntity "http://swapi.co/api/people/1/" Character.parse
+    |> Promise.map LoadFilms
+    |> Promise.catch ( fun _ -> FetchFail )
     |> Promise.map handler
     |> ignore
 ```
@@ -634,39 +626,27 @@ Now the last two functions: `getCharacters` and `getFilms`, that get all the rel
 ```fsharp
 let getCharacters (film: Film.Model) handler =
     film.characters
-        |> List.map ( fun url -> promise {
-            try
-                return! fetchEntity url Character.parse
-            with e ->
-                return None } )
-        |> Promise.Parallel
-        |> Promise.map (
-            Array.choose id
-            >> Array.toList
-            >> fun chs -> ToCharactersFromFilm (film, chs)
-            >> handler )
-        |> ignore
+    |> List.map ( fun url -> fetchEntity url Character.parse )
+    |> Promise.Parallel
+    |> Promise.map ( fun chs -> ToCharactersFromFilm (film, List.ofArray chs) )
+    |> Promise.catch ( fun _ -> FetchFail )
+    |> Promise.map handler
+    |> ignore
 ```
 
-This function fetchs all the entities in parallel, converts the `Character.Model option []` that result from `Parallel` to a `Character.Model list`, build a `ToCharactersFromFilm` message and calls `handler`. As they say in Math books, "understanding the details of this pipeline is left as an exercise to the reader" ;) 
+This function fetchs all the entities in parallel, wait for all the promises to resolve, build a `ToCharactersFromFilm` message and calls `handler`.
 
 `getFilms` is almost mirrored:
 
 ```fsharp
 let getFilms (character: Character.Model) handler =
     character.films
-        |> List.map ( fun url -> promise {
-            try
-                return! fetchEntity url Film.parse
-            with e ->
-                return None } )
-        |> Promise.Parallel
-        |> Promise.map (
-            Array.choose id
-            >> Array.toList
-            >> fun fs -> ToFilmsFromCharacter (character, fs)
-            >> handler )
-        |> ignore
+    |> List.map ( fun url -> fetchEntity url Film.parse )
+    |> Promise.Parallel
+    |> Promise.map ( fun fs -> ToFilmsFromCharacter (character, List.ofArray fs) )
+    |> Promise.catch ( fun _ -> FetchFail )
+    |> Promise.map handler
+    |> ignore
 ```
 
 Now we finish our update (notice the side effects listed!):
@@ -691,6 +671,8 @@ let update model msg =
 ```
 
 And that's it - the application is done, and running without any error. That's the sensation you have only with a good compiled language: code running and working at the same time, from the beginning.
+
+The complete application [can be found here](https://github.com/lucasmreis/star-wars-fable/blob/master/src/MainFirst.fsx).
 
 ## Bonus: Refactoring! 
 
@@ -723,24 +705,41 @@ type Model =
 And we can parse the json using the function:
 
 ```fsharp
-type ResponseJson =
+type CharacterResponseJson =
     { name : string
-      title : string
-      episode_id : string
-      characters : string list
       films : string list }
 
-let parse json =
-    let obj = ofJson<ResponseJson> json
-    if String.IsNullOrEmpty obj.name then
-        { related = obj.characters
-          details = Film ( obj.title , obj.episode_id ) }
-    else
-        { related = obj.films
-          details = Character obj.name }
+type FilmResponseJson =
+    { title : string
+      episode_id : int
+      characters : string list }
+
+let [<PassGenericsAttribute>] betterOfJson<'a> text =
+    try
+        let json = ofJson<'a> text
+        Some json
+    with _ ->
+        None
+
+let parse text =
+    let chRecord = betterOfJson<CharacterResponseJson> text
+    let filmRecord = betterOfJson<FilmResponseJson> text
+    match chRecord , filmRecord with
+    | Some ch , _ ->
+        { related = ch.films
+          details = Character ch.name }
+    | _ , Some film ->
+        { related = film.characters
+          details = Film ( film.title , film.episode_id.ToString() ) }
+    | _ ->
+        failwith "could not parse entity"
 ```
 
-For the parser, I convert the json to a `ResponseJson`, and check if the key `name` holds any value. If it does, it's a character, if it doesn't, it's a film. (I'm still not happpy with the json parsing, but it's working well for this API)
+Let's pause a little to understand this function. First I created the record types that reflect the information I'm looking for in the API's json schema. Then I created a function called `betterOfJson` which is just `ofJson` returning an `option`. We have to use the `[<PassGenericsAttribute>]` so this function works properly when transpiled to Javascript. No need to worry how it works - the compiler tells you where you need to use it! :)
+
+After that, the parse function is defined. It raises an exception if there's an error; what, again, I really do not like since it works as a "hidden output". But we're going to use it inside a Promise, so it's not that bad.
+
+Actually, if someone knows a better way to deal with JSON parsing, please say it in the comment section!
 
 Next, let's deal with the application update part. The messages can be simplified too:
 
@@ -761,9 +760,9 @@ let fetchEntity (url:Url) =
         return parse response }
 
 let getFirstCharacter handler =
-    promise {
-        let! entity = fetchEntity "http://swapi.co/api/people/2/"
-        return Load entity }
+    fetchEntity "http://swapi.co/api/people/2/"
+    |> Promise.map Load
+    |> Promise.catch ( fun _ -> FetchFail )
     |> Promise.map handler
     |> ignore
 ```
@@ -775,6 +774,7 @@ let getRelatedEntities (entity:Entity) handler =
     List.map fetchEntity entity.related
     |> Promise.Parallel
     |> Promise.map ( fun list -> ToList ( entity , List.ofArray list ) )
+    |> Promise.catch ( fun _ -> FetchFail )
     |> Promise.map handler
     |> ignore
 ```
@@ -789,12 +789,51 @@ let update model msg =
     | FetchFail -> ErrorScreen , []
 ```
 
+From this point on, we only need to implement the view functions. This is the final `view` function (`messageView` and `entityView` were ommited for brevity, but [can be found here](https://github.com/lucasmreis/star-wars-fable/blob/master/src/Main.fsx#L94)):
+
+```fsharp
+let view model =
+    match model with
+    | InitialScreen ->
+        messageView "Loading amazing characters and films..."
+
+    | Loading entity ->
+        div [ Style [ "display", "flex" ] ]
+            [ mappedEntityView entity ; loadingMessageView entity ]
+
+    | List ( entity , list ) ->
+        let listView = List.map mappedEntityView list
+        div [ Style [ "display", "flex" ] ]
+            [ mappedEntityView entity ; div [] listView ]
+
+    | ErrorScreen ->
+        messageView "An error ocurred. Please refresh the page and try again - and may the Force be with you!"
+```
+
+Much simpler, right? It's always a pleasure to refactor code using an ML language :)
+
+## Conclusions
+
+This is it - we have a completely refactored working version of the Star Wars app. [The complete code is here](https://github.com/lucasmreis/star-wars-fable), and [the working app is here](https://lucasmreis.github.io/star-wars-fable/).
+
+[I compared Elm and F# before](http://lucasmreis.github.io/blog/does-elm-harmonize-with-f/#final-conclusions), and this post is an experiment on comparing both *in the same domain*, which is frontend web programming. On these terms, these some random thoughts:
+
+* Elm is much friendlier to beginners. It has one way to do almost everything, so there's not much decisions to do when implementing something - it has more of a "puzzle" feel to it. Also, tools like [Try Elm](http://elm-lang.org/try) and [Elm Reactor](https://github.com/elm-lang/elm-reactor) make it very simple and fast to just start coding and experimenting with the language.
+* On the other hand, Fable does not hide from you the fact that it's going to compile to Javascript, and because of that, you have a lot of freedom. For instance, I could right away make the requests parallel, because promises work just like in JS. In Elm, there was [simply no default way of doing it](http://lucasmreis.github.io/blog/learning-elm-part-3/#almost-finishing-our-application-).
+* F#, when used with the Ionide VS Code plugin, is probably the best coding experience I've had. Elm comes close (and `elm-format` is great), but hovering in any variable to understand what it is in realtime is an amazing experience. And the types code lenses are really useful too.
+
+## Next Steps
+
+I enjoyed the Fable experimentation. I'll continue to look at it, and probably try something with more JS interop to understand better how it would behave in a more real world scenario.
+
+Elm still seems the sensible solution if you have a team of people still learning functional programming. Elm has a lighter cognitive load, since there's almost only one way of doing it, and the defaults are very good, making it a great learning tool too. 
+
+But I can see a team wanting to have more freedom, and Fable seems like a really good tool that offers it, while still maintaining most of the safety and power from an ML language. 
 
 
 
 
 
-Differences from the Elm version: first of all, in Elm's defense, even though it's very "boilerplatey", the json parsing felt more robust and safe than what I did with Fable. And, as a positive point to Fable, the async work is much faster, since it was really easy to send all the requests in parallel.
 
 
 
