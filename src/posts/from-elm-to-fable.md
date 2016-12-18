@@ -739,7 +739,44 @@ Let's pause a little to understand this function. First I created the record typ
 
 After that, the parse function is defined. It raises an exception if there's an error; what, again, I really do not like since it works as a "hidden output". But we're going to use it inside a Promise, so it's not that bad.
 
-Actually, if someone knows a better way to deal with JSON parsing, please say it in the comment section!
+Trying to make this function better, I learned another really amazing F# feature: *Partial Active Patterns*. I wanted to to have this function written somewhat like this:
+
+```fsharp
+let parse text =
+    match text with
+    | IsCharacter ch -> ...
+    | IsFilm film -> ...
+    | _ -> failwith "could not parse entity"
+```
+
+It turns out that there's a simple way to achieve that:
+
+```fsharp
+let (|IsCharacter|_|) text =
+    betterOfJson<CharacterResponseJson> text
+
+let (|IsFilm|_|) text =
+    betterOfJson<FilmResponseJson> text
+```
+
+To build a Partial Active Pattern, you have to write a function that returns an `option`, and has this `(|PatternMatchCase|_|)` definition. Now you can use both `IsCharacter` and `IsFilm` in a pattern match:
+
+```fsharp
+let parse text =
+    match text with
+    | IsCharacter ch ->
+        { related = ch.films
+          details = Character ch.name }
+    | IsFilm film ->
+        { related = film.characters
+          details = Film ( film.title , film.episode_id.ToString() ) }
+    | _ ->
+        failwith "could not parse entity"
+```
+
+Much simpler. This is another feature of F# that makes it stand out.
+
+Ok, but I'm still not happy with an "exception-throwing" function. If someone knows a better way to deal with JSON parsing, please say it in the comment section!
 
 Next, let's deal with the application update part. The messages can be simplified too:
 
@@ -820,13 +857,14 @@ This is it - we have a completely refactored working version of the Star Wars ap
 
 * Elm is much friendlier to beginners. It has one way to do almost everything, so there's not much decisions to do when implementing something - it has more of a "puzzle" feel to it. Also, tools like [Try Elm](http://elm-lang.org/try) and [Elm Reactor](https://github.com/elm-lang/elm-reactor) make it very simple and fast to just start coding and experimenting with the language.
 * On the other hand, Fable does not hide from you the fact that it's going to compile to Javascript, and because of that, you have a lot of freedom. For instance, I could right away make the requests parallel, because promises work just like in JS. In Elm, there was [simply no default way of doing it](http://lucasmreis.github.io/blog/learning-elm-part-3/#almost-finishing-our-application-).
+* F#'s *computation expressions* and *partial active patterns* are really powerful, and make code more readable and elegant. Actually, it also makes it *simpler*. There's nothing like it in Elm.
 * F#, when used with the Ionide VS Code plugin, is probably the best coding experience I've had. Elm comes close (and `elm-format` is great), but hovering in any variable to understand what it is in realtime is an amazing experience. And the types code lenses are really useful too.
 
 ## Next Steps
 
 I enjoyed the Fable experimentation. I'll continue to look at it, and probably try something with more JS interop to understand better how it would behave in a more real world scenario.
 
-Elm still seems the sensible solution if you have a team of people still learning functional programming. Elm has a lighter cognitive load, since there's almost only one way of doing it, and the defaults are very good, making it a great learning tool too. 
+Elm still seems the sensible solution if you have a team of people that are *learning* functional programming. Elm has a lighter cognitive load, since there's almost only one way of doing it, and the defaults are very good, making it a great learning tool too. 
 
 But I can see a team wanting to have more freedom, and Fable seems like a really good tool that offers it, while still maintaining most of the safety and power from an ML language. 
 
