@@ -280,6 +280,8 @@ Speaking on F# in particular, it's a very "agile" developing experience. Good ty
 
 Another good surprise was Expecto, and how easy it was to setup, write and run the tests - even the property based ones.
 
+The final code can be found [here](https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Domain.fs), and the tests [here](https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Tests.fs).
+
 ## Nest Steps
 
 Now that we have a simple model working, it's time to change the specs and add new features. In my next update I'll add promotions to the products. Stay tuned!
