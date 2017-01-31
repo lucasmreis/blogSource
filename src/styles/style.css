@@ -6,7 +6,7 @@ body {
 }
 
 #container {
-  max-width: 38em;
+  max-width: 42em;
   padding: 0 15px;
   margin: 50px auto;
 }
@@ -112,7 +112,7 @@ ol li {
 }
 
 pre, code {
-  font-family: 'Source Code Pro', Courier New, monospace;
+  font-family: 'Consolas', 'Source Code Pro', monospace;
   margin: 20px 0;
 }
 
