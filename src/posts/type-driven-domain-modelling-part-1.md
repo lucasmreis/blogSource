@@ -164,7 +164,7 @@ First, we need to install `Expecto.FsCheck`, which is the library that let's Exp
   </div>
 </div>
 
-Now that the package is installed, we need to add the dependency in the project. Open the `paket.eferences` file, and add `Expecto.FsCheck` to the list of dependencies. Then run the install command from Paket:
+Now that the package is installed, we need to add the dependency in the project. Open the `paket.references` file, and add `Expecto.FsCheck` to the list of dependencies. Then run the install command from Paket:
 
 <div style="display: flex">
   <div style="padding-right: 10px">
@@ -282,7 +282,7 @@ Another good surprise was Expecto, and how easy it was to setup, write and run t
 
 The final code can be found [here](https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Domain.fs), and the tests [here](https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Tests.fs).
 
-## Nest Steps
+## Next Steps
 
 Now that we have a simple model working, it's time to change the specs and add new features. In my next update I'll add promotions to the products. Stay tuned!
 
