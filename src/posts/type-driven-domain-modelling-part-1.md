@@ -1,6 +1,6 @@
 ---
 title: Type Driven Domain Modelling, part 1
-lead: Evolving Models With F#
+lead: Types And Property Testing With F#
 template: post.hbt
 date: 2017-01-26
 tags: functional, types, fsharp, domain
