@@ -69,12 +69,7 @@ Looking through the [primitives of F#](https://docs.microsoft.com/en-us/dotnet/a
 type Sku = string
 type Price = int
 type Qty = uint16
-
-let createQty (n : int) : Qty =
-    if n < 0 then (uint16 0) else (uint16 n)
 ```
-
-I also created a little helper to create a `Qty` from an `int`, just because. :)
 
 ## Calculating Totals
 
@@ -101,11 +96,11 @@ let promotedTotal quantity price promotion = 0
 (...)
 
 testProperty "promoted line total" <| fun (N : Qty) ->
-    let promoQty = N + (createQty 2)
+    let promoQty = N + 2us // notation for unit16
     let promotion = { promoQty = promoQty ; promoPrice = 7 }
     let promoted = promotedTotal promoQty 10 promotion
 
-    let notPromoQty = N + (createQty 1)
+    let notPromoQty = N + 1us
     let notPromoted = promotedTotal notPromoQty 10 promotion
 
     let promotedExpected = 7
@@ -117,7 +112,7 @@ testProperty "promoted line total" <| fun (N : Qty) ->
 
 I also had to correct the other tests to work with the new `Product` and `Price` types. The final version of the test file is [here](https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Tests.fs). Fixing these errors is very direct, since it only involves "getting rid of the red underlinings" that Ionide + the compiler signal. It's never - ever - that easy in JS, or any other dynamic language for that matter. It's a much more stressful activity, and stressful activities drain your energy.
 
-The test is simple: if I have a promotion "buy N for $7", if I add N to the basket, my total is 7. If I add N - 1, my total is (N - 1) * unit price. (I use `N + (createQty 2)` here to guarantee that I don't have any unwanted zeros).
+The test is simple: if I have a promotion "buy N for $7", if I add N to the basket, my total is 7. If I add N - 1, my total is (N - 1) * unit price. (I use `N + 2us` here to guarantee that I don't have any unwanted zeros).
 
 Now, the implementation:
 
@@ -160,15 +155,15 @@ let productB = {
     sku = "b"
     price = 2
     promotion = Some {
-        promoQty = createQty 3
+        promoQty = 3us
         promoPrice = 5
     }
 }
 
 let events = [
-    AddToBasket(productA, createQty 5)
-    AddToBasket(productB, createQty 7)
-    AddToBasket(productA, createQty 4)
+    AddToBasket(productA, 5us)
+    AddToBasket(productB, 7us)
+    AddToBasket(productA, 4us)
 ]
 
 let myBasket = List.fold update empty events
