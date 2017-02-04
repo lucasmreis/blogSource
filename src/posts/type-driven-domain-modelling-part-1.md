@@ -7,6 +7,10 @@ tags: functional, types, fsharp, domain
 draft: false
 ---
 
+*This is part 1 of a series:*
+
+* [Part 2: Evolving Models](http://lucasmreis.github.io/blog/type-driven-domain-modelling-part-2/)
+
 A while ago I saw this tweet:
 
 <div style="display: flex; justify-content: center">
