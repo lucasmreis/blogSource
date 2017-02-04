@@ -71,7 +71,7 @@ type Price = int
 type Qty = uint16
 
 let createQty (n : int) : Qty =
-    if n > 0 then (uint16 0) else (uint16 n)
+    if n < 0 then (uint16 0) else (uint16 n)
 ```
 
 I also created a little helper to create a `Qty` from an `int`, just because. :)
