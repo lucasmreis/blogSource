@@ -10,6 +10,8 @@ draft: false
 *This is part 1 of a series:*
 
 * [Part 2: Evolving Models](http://lucasmreis.github.io/blog/type-driven-domain-modelling-part-2/)
+* [Part 3: One More Spec Change](http://lucasmreis.github.io/blog/type-driven-domain-modelling-part-3/)
+
 
 A while ago I saw this tweet:
 

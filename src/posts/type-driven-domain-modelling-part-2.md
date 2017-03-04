@@ -10,6 +10,7 @@ draft: false
 *This is part 2 of a series:*
 
 * [Part 1: Types And Property Testing](http://lucasmreis.github.io/blog/type-driven-domain-modelling-part-1/)
+* [Part 3: One More Spec Change](http://lucasmreis.github.io/blog/type-driven-domain-modelling-part-3/)
 
 We wrote our initial domain in part 1. The user produces an event called `AddToBasket`, with a product and a quantity. Then we wrote a function that takes a list of events, and produces a read model to send to the client to be rendered.
 
