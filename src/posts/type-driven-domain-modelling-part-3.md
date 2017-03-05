@@ -12,15 +12,15 @@ draft: false
 * [Part 1: Types And Property Testing](http://lucasmreis.github.io/blog/type-driven-domain-modelling-part-1/)
 * [Part 2: Evolving Models](http://lucasmreis.github.io/blog/type-driven-domain-modelling-part-2/)
 
-In this third part of the series, we're gonna add a feature to the basket read model: every line will be more explicit about if it's promoted or not, and what the discount was.
+In this third part of the series, we will add a feature to the basket read model: every line will be more explicit about whether or not it's being promoted, and what the discount is.
 
 ## Spec
 
-Every line and the basket itself will either have only one total value if there are no promotions applied, or it will list the *original* total value if there was no promotion, the resulting *discount*, and the *final* total value after subtracting the discount from the original total.
+Lines in the basket will have one total value if there are no promotions applied. In cases where a promotion is applied, lines in the basket will list the *original* total value (before discount), the resulting *discount*, and the *final* total value after subtracting the discount from the original total.
 
 ## Evolving The Types
 
-To achieve the new spec, we don't need to change the Product or the Event. In *CQRS* terms, we don't need to change the *Command* side, only the *Read* side.
+To achieve the new spec, we don't need to change the Product or the Event. Or In *CQRS* terms, we don't need to change the *Command* side, only the *Read* side.
 
 Let's first define a type `ReadTotal`, that expresses the totals we need to show the user according to the new spec:
 
@@ -30,7 +30,7 @@ type ReadTotal =
     | Promoted of original: Price * discount: Price * final: Price
 ```
 
-There we have it: a `NotPromoted` total that only stores the price, or a `Promoted` total, that stores both the price before and after the promotion (`original` and `final`) and the discount.
+There we have it: a `NotPromoted` total that only stores the price, or a `Promoted` total, that stores the price before, the discount, and the price after the promotion (`original`, `discount`, and `final`).
 
 Now let's see it in our read models:
 
@@ -110,17 +110,24 @@ let basketTotal lines =
     |> List.fold (+) 0
 ```
 
-This works the same way, but exposes a more generic syntax that we can take advantage. `(+)` is the function that sums two ints, and `0` is an "initial" int; that means that, to adapt this function to `ReadTotal` instead of int, we only need to implement a function that sums two `ReadTotal`, and an initial total!
+This works the same way, but exposes a more generic syntax that we can take advantage of. `(+)` is the function that sums two ints, and `0` is an "initial" int; that means that in order to adapt this function to `ReadTotal` instead of int we only need to implement a function that sums two `ReadTotal` and an initial total!
 
 To sum two `ReadTotal`, we have to take into account that both could be either `NotPromoted` or `Promoted`. I'll implement it as four case pattern match, and if you have a better idea, please write it in the comments!
 
 ```fsharp
 let sumTotals t1 t2 =
     match t1, t2 with
-    | NotPromoted v1, NotPromoted v2 -> NotPromoted(v1 + v2)
-    | NotPromoted v, Promoted(o, d, f) -> Promoted(v + o, d, v + f)
-    | Promoted(o, d, f), NotPromoted v -> Promoted(v + o, d, v + f)
-    | Promoted(o1, d1, f1), Promoted(o2, d2, f2) -> Promoted(o1 + o2, d1 + d2, f1 + f2)
+    | NotPromoted v1, NotPromoted v2 ->
+        NotPromoted(v1 + v2)
+
+    | NotPromoted v, Promoted(o, d, f) ->
+	    Promoted(v + o, d, v + f)
+
+    | Promoted(o, d, f), NotPromoted v ->
+	    Promoted(v + o, d, v + f)
+
+    | Promoted(o1, d1, f1), Promoted(o2, d2, f2) ->
+	    Promoted(o1 + o2, d1 + d2, f1 + f2)
 
 let basketTotal lines =
     lines
@@ -128,7 +135,9 @@ let basketTotal lines =
     |> List.fold sumTotals (NotPromoted 0)
 ```
 
-And our new domain is ready! Just run the `Experiments.fsx` script we wrote last part, and see the results :)
+And our new domain is ready! Just run the `Experiments.fsx` script we [wrote in Part 2](http://lucasmreis.github.io/blog/type-driven-domain-modelling-part-2/), and see the results :)
+
+The final file for the domain [can be found here](https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Domain.fs).
 
 ## Updating The Tests
 
@@ -153,7 +162,7 @@ testProperty "promoted line total" <| fun (N : Qty) ->
     Expect.equal notPromoted notPromotedExpected "multiplied by regular price"
 ```
 
-We can test also that adding any quantity of not promoted products to a basket with non promoted lines result in a non promoted basket:
+We can also test that adding any quantity of non-promoted products to a basket with non-promoted lines results in a non-promoted basket:
 
 ```fsharp
 testProperty "not promoted products added to not promoted" <| fun (N : Qty) ->
@@ -204,14 +213,16 @@ testProperty "not promoted products added to promoted" <| fun (N : Qty) ->
     Expect.isTrue isPromoted "should stay promoted"
 ```
 
-I think these tests are enough to give a lot of confidence in the code, but of course they don't assure absolute correctness. So, if you have any other ideas for interesting properties to test, please write it in the comment section!
+I think these tests are enough to have a lot of confidence in the code, but of course they don't assure absolute correctness. So, if you have any other ideas for interesting properties to test, please write it in the comment section!
+
+The final file for the tests [can be found here](https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Tests.fs).
 
 ## Conclusions
 
-Now we have a function that transforms a list of events into a relatively complex basket. I really like how code is very declarative, and are very self explanatory. The type system definitely contributes to that. This, combined with the propoerty tests, make me feel very confident of the *correctness* of this code.
+Now we have a function that transforms a list of events into a relatively complex basket. I really like how the code is very declarative, and is also self explanatory. The type system contributes to that. This, combined with the property tests, makes me feel very confident in the *correctness* of this code.
 
-Summarizing: I'm completely sold to ML languages now :) Not only I tend to find my code more reliable and safe, it's also more concise *and* readable. After these months experimenting with Elm and F#, I think that ML languages bring all the benefits of a dynamic functional language like Clojure, and take it to a whole new level.
+As a side note, I'm completely sold on ML languages now :). Not only do I tend to find my code more reliable and safe, it's also more concise *and* readable. After these last months experimenting with Elm and F#, I think that ML languages take all the benefits of a dynamic functional language like Clojure to a whole new level.
 
 ## Next Steps
 
-That is my "planned last part" of this series. But this exercise could go in two different directions now: either building an actual application using this domain model, say a web API; or evolving the domain model, by adding either new commands or read models. Feel free to share any ideas you have!
+That is my "planned last part" of this series. But this exercise could go in two different directions from here: either building an actual application using this domain model, a web API for example, or evolving the domain model, by adding either new commands or read models. Feel free to share any ideas you have!
