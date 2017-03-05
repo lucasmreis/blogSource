@@ -137,8 +137,6 @@ let basketTotal lines =
 
 And our new domain is ready! Just run the `Experiments.fsx` script we [wrote in Part 2](http://lucasmreis.github.io/blog/type-driven-domain-modelling-part-2/), and see the results :)
 
-The final file for the domain [can be found here](https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Domain.fs).
-
 ## Updating The Tests
 
 For the "promoted line total" test, we need now to build both the `Promoted` and `NotPromoted` expected results:
@@ -215,13 +213,13 @@ testProperty "not promoted products added to promoted" <| fun (N : Qty) ->
 
 I think these tests are enough to have a lot of confidence in the code, but of course they don't assure absolute correctness. So, if you have any other ideas for interesting properties to test, please write it in the comment section!
 
-The final file for the tests [can be found here](https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Tests.fs).
-
 ## Conclusions
 
 Now we have a function that transforms a list of events into a relatively complex basket. I really like how the code is very declarative, and is also self explanatory. The type system contributes to that. This, combined with the property tests, makes me feel very confident in the *correctness* of this code.
 
 As a side note, I'm completely sold on ML languages now :). Not only do I tend to find my code more reliable and safe, it's also more concise *and* readable. After these last months experimenting with Elm and F#, I think that ML languages take all the benefits of a dynamic functional language like Clojure to a whole new level.
+
+The final code for the domain is [here](https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Domain.fs), and the final code for the tests are [here](https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Tests.fs).
 
 ## Next Steps
 

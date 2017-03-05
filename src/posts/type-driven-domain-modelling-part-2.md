@@ -182,7 +182,7 @@ Changing F# code is so smooth, it's almost fun. And this is a good thing - it's 
 
 Whenever we do a lot of cognitive-intense work, we get tired. There's no escape to that. And when we get tired, we make mistakes. In the projects I've worked on, I think 90% of the simple errors that were deployed to production were deployed by tired developers. So, that's another positive contribution from F# and its tooling and ecosystem to a project's *safety*, in the sense that *no unwanted accidents happen in production*.
 
-The final code for the domain is [here](https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Domain.fs), and the final code for the tests are [here](https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Tests.fs).
+The final code for the domain is [here](https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/DomainPart2.fs), and the final code for the tests are [here](https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/TestsPart2.fs).
 
 ## Next Steps
 

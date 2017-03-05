@@ -286,7 +286,7 @@ Speaking on F# in particular, it's a very "agile" developing experience. Good ty
 
 Another good surprise was Expecto, and how easy it was to setup, write and run the tests - even the property based ones.
 
-The final code can be found [here](https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Domain.fs), and the tests [here](https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Tests.fs).
+The final code can be found [here](https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/DomainPart1.fs), and the tests [here](https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/TestsPart1.fs).
 
 ## Next Steps
 
