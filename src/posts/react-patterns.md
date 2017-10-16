@@ -136,7 +136,7 @@ With the separated view component, we can very easily use it in a styleguide, an
 
 Also, my experience shows that this pattern scales better: maybe one of the view states gets big, and it's straightforward to extract it through a new component. On the logic side, it's also much easier to understand and change code not polluted with view related stuff.
 
-Notice that the view component has some if logic to define what to render. We can extract it into it's own component, in what could be considered a variant of the Container / View ppattern:
+Notice that the view component has some "if" logic to define what to render. We can extract it into it's own component, in what could be considered a variant of the Container / View pattern:
 
 ### The Container / Branch / View Pattern
 
@@ -153,17 +153,15 @@ const PlanetView = ({ name, climate, terrain }) => (
   </div>
 );
 
-class PlanetBranch extends React.Component {
-  render() {
-    if (this.props.loading) {
-      return <LoadingView />;
-    } else if (this.props.planet) {
-      return <PlanetView {...this.props.planet} />;
-    } else {
-      return <ErrorView />;
-    }
+const PlanetBranch = ({ loading, planet }) => {
+  if (loading) {
+    return <LoadingView />;
+  } else if (planet) {
+    return <PlanetView {...planet} />;
+  } else {
+    return <ErrorView />;
   }
-}
+};
 
 // State:
 // { loading: true }
@@ -196,22 +194,180 @@ The only situation that these initial patterns are not useful is when we need to
 
 ## Higher Order Components
 
-PROS: logic not dependent on views, reusable
-CONS: views sort of dependent on hoc props schema, still need a branch/selector component to solve it
+Higher Order Components (HOCs) are simply functions that take at least one component as a parameter and return another component. Usually what it does is adding props to the passed component after doing some work. For instance, we could have a `withDagobah` HOC that fetches info about Dagobah and passes the result as a prop:
 
-Example: https://github.com/ctrlplusb/react-sizeme
+```js
+const withDagobah = PlanetViewComponent =>
+  class extends React.Component {
+    state = { loading: true };
 
-### Variation: Branching HOC
-Example: https://github.com/thejameskyle/react-loadable
+    componentDidMount() {
+      fetch("https://swapi.co/api/planets/5")
+        .then(res => res.json())
+        .then(
+          planet => this.setState({ loading: false, planet }),
+          error => this.setState({ loading: false, error })
+        );
+    }
+
+    render() {
+      return <PlanetViewComponent {...this.state} />;
+    }
+  };
+
+export default withDagobah(PlanetBranch);
+```
+
+Now, all this planet fetching logic is inside this HOC, and is *not dependent on any view logic*. It does not have any dependency on any particular React views, it only adds some props to a passed component. That way, you can use it for instance in all your routes, with different components rendering planets differently.
+
+**Note:** if you use this HOC in two components being rendered in the same screen, it will fetch the data twice. Fetching data is an expensive side effect, and usually we try to do it as little as we can. I'll talk how to deal with it in the last pattern of this post, so keep on reading! :)
+
+A HOC can also accept different parameter to define it's behavior. We could have for instance a `withPlanet` HOC that fetches different planets:
+
+```js
+const hoc = withPlanet('tatooine');
+const Tatooine = hoc(PlanetView);
+
+// somewhere else inside a component:
+render() {
+  return (
+    <div>
+      <Tatooine />
+    </div>
+  );
+}
+```
+
+An example of a HOC with this ability is [react-sizeme](https://github.com/ctrlplusb/react-sizeme). It receives an options object and a component, and returns another component with a `size` props, containing height, width and position information.
+
+So, what are the cons of HOCSs? The first painful one is that every view that will be used with the HOC has to understand the shape of the props passed. In our example, we add the `loading`, `error` and `planet`, and our views need to be prepared for it. Sometimes we have to have a component that the only purpose is transforming the props into the intended ones, and that feels inefficient (interestingly, one of the most used HOCs does not have this problem: [react-redux](https://github.com/reactjs/react-redux)'s `connect`, since the user decides the shape of the props passed to the view component).
+
+Some HOCs will always lead to branched views, like our `withDagobah` that almost always will be viewed with Loading, Error and Success views. That can give rise to a HOC variant:
+
+### Branching Higher Order Components
+
+We can put the branching logic inside the HOC:
+
+```js
+const withDagobah = ({
+  LoadingViewComponent,
+  ErrorViewComponent,
+  PlanetViewComponent
+}) =>
+  class extends React.Component {
+    state = { loading: true };
+
+    componentDidMount() {
+      fetch("https://swapi.co/api/planets/5")
+        .then(res => res.json())
+        .then(
+          planet => this.setState({ loading: false, planet }),
+          error => this.setState({ loading: false, error })
+        );
+    }
+
+    render() {
+      if (this.state.loading) {
+        return <LoadingViewComponent />;
+      } else if (this.state.planet) {
+        return <PlanetViewComponent {...this.state.planet} />;
+      } else {
+        return <ErrorViewComponent />;
+      }
+    }
+  };
+
+// and the HOC would be called like this:
+export default withDagobah({
+  LoadingViewComponent: LoadingView,
+  ErrorViewComponent: ErrorView,
+  PlanetViewComponent: PlanetView
+});
+```
+
+There's a trade off here: even though the views are simpler, there's more logic inside the HOC. It's only worth it if you really know that more than one view is going to be used, and that the branching logic will be the same every time. An example of a branching HOC is [react-loadable](https://github.com/thejameskyle/react-loadable), that accepts both a dynamic loaded component and a Loading component that handles both loading and error state.
 
 ## Render Props
 
-PROS: same as HOC, with views being less dependent on logic, and does not need as much code outside react lifecycle
-CONS: same as hocs
+There is another widely used pattern that separates the logic from the view, the Render Props (also known as Children as Function). [Some people swear by it](https://cdb.reacttraining.com/use-a-render-prop-50de598f11ce),and some people even [consider it an anti-pattern](http://americanexpress.io/faccs-are-an-antipattern/). This is how our Dagobah logic would be implemented as a Render Prop:
 
-Performance issue: not straightforward! :)
+```js
+class DagobahRP extends React.Component {
+  state = { loading: true };
+
+  componentDidMount() {
+    fetch("https://swapi.co/api/planets/5")
+      .then(res => res.json())
+      .then(
+        planet => this.setState({ loading: false, planet }),
+        error => this.setState({ loading: false, error })
+      );
+  }
+
+  render() {
+    return this.props.render(this.state);
+  }
+}
+
+// notice that a function is passed to the render prop:
+export default () => (
+  <DagobahRP
+    render={({ loading, error, planet }) => {
+      if (loading) {
+        return <LoadingView />;
+      } else if (planet) {
+        return <PlanetView {...planet} />;
+      } else {
+        return <ErrorView />;
+      }
+    }}
+  />
+);
+```
+
+**Note:** in the Render Props debate, the performance issue was raised many times. This post shows well how [it's not a straightforward issue](https://cdb.reacttraining.com/react-inline-functions-and-performance-bdff784f5578). Anytime we talk about performance, we should also be talking about measurements. If you have any doubts about performance in a specific issue, load your profilers and measure it! :)
+
+I tend to feel that the benefits of HOCs versus Render Props vary from situation to situation. At my previous job we tended to write more Render Props, at my current job we tend to write more HOCs, and I don't feel that made any of the teams more productive, or the code more readable in general. I definitely feel one pattern is better than the other whenever I meet it in the code, but as I said, it's in a case by case basis. As always, use your better judgement.
+
+The first time I saw the Render Props pattern was in the [React Motion library](https://github.com/chenglou/react-motion). [React Router v4](https://reacttraining.com/react-router/web/api/Route/render-func) is another large function implementing it. The two authors are probably the most influential render props enthusiasts, and they have a couple of other [small libraries](https://reacttraining.com/react-idle/) [using it](https://reacttraining.com/react-network/).
+
+Render props can also lead to a lot of branching views code, so I feel I also should register here the Branching Render Props variant:
 
 ### Variation: Branching Render Props
+
+```js
+class DagobahRP extends React.Component {
+  state = { loading: true };
+
+  componentDidMount() {
+    fetch("https://swapi.co/api/planets/5")
+      .then(res => res.json())
+      .then(
+        planet => this.setState({ loading: false, planet }),
+        error => this.setState({ loading: false, error })
+      );
+  }
+
+  render() {
+    if (this.state.loading) {
+      return this.props.renderLoading();
+    } else if (this.state.planet) {
+      return this.props.renderPlanet(this.state.planet);
+    } else {
+      return this.props.renderError(this.state.error);
+    }
+  }
+}
+
+// different callback for different branches:
+export default () => (
+  <DagobahRP
+    renderLoading={() => <LoadingView />}
+    renderError={error => <ErrorView />}
+    renderPlanet={planet => <PlanetView {...planet} />}
+  />
+);
+```
 
 What if side effects are costly, and you only want to run it once and make it available to different views?
 
