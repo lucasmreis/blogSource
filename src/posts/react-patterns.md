@@ -481,3 +481,5 @@ Going back to the percentages, I would say my React code (and most I've come acc
 ## Summary
 
 Regular React components work well most of the time, but it's better to try separating logic from view. If you need to reuse logic for different view components, use HOCs or Render Props. If the logic involves expensive side effects that should only run once, use a provider. That's it!
+
+The code used in this post can [be found here](https://github.com/lucasmreis/react-patterns/tree/master/src/planet).
