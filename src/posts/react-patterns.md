@@ -370,6 +370,7 @@ export default () => (
   />
 );
 ```
+
 And that's it.
 
 ## What if the side effects are costly?
