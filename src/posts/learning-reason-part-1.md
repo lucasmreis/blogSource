@@ -582,7 +582,7 @@ It would be amazing if we could simply use our functions like this:
 "8H" |> parseCard |> renderCard |> Js.log;
 ```
 
-But we get the (very well structured btw) compiler error:
+But we get the (very good btw) compiler error message:
 
 ```
 We've found a bug for you!
@@ -601,3 +601,155 @@ The incompatible parts:
   vs
   option(card)
 ```
+
+_Note:_ Elm is known for having amazing error messages - and it really does have them. I'm really happy they were very vocal about it, and that this practice is now "leaking" to other languages! Congratulations to the Reason / Bucklescript team to borrow the right features form different projects.
+
+Alright, so we can't pipe our functions because `parseCard` return a option(card), and `renderCard`'s input is a card. Let's use this opportunity to build a couple of helper functions!
+
+First, wouldn't it be useful to have a function that receives an option of something and a function of something, and applies the function to the value if it's a Some, and does not do anything if it's a None? This function is called `map`, and it would help our pipeline:
+
+```js
+let optionMap = fn => opt =>
+  switch opt {
+  | Some(x) => fn(x) |> some
+  | None => None
+  };
+```
+
+This is a higher order function, so now we can use:
+
+```js
+"8H" |> parseCard |> optionMap(renderCard) |> Js.log;
+```
+
+And `renderCard` will only be called if `parseCard` returns a Some. But, after saving the file, we can see that the declaration of the function is changed by the code formatter to `let optionMap = (fn, opt) => (...)`! Does it mean that Reason does not like higher order functions? No, it's the opposite: in Reason and most other ML languages, _all the functions are curried by default_. That means that, differently from usual JS functions, if you call a function with less input parameters than the function was expecting, you will have another function as a result, that will expect the other parameters. A classic simple example:
+
+```js
+/* (int, int) => (int) */
+let sum = (x, y) => x + y;
+
+/* (int) => (int) */
+let sum5 = sum(5);
+
+/* int */
+let eight = sum5(3);
+```
+
+Ok, now our file compiles, but the output is an _array_ of string instead of a string. That's because `optionMap(renderCard)` returns a string _option_, not a string! If we feed the pipeline with an invalid card, say "1X", We'll see that the logged output will be "0", which is how Bucklescript translates None to javascript.
+
+So let's implement a function to transform a string option into a string. We can do it by returning the string itself if it's inside a Some, or returning a default value if it's a None:
+
+```js
+let optionWithDefault = (defaultValue, opt) =>
+  switch opt {
+  | Some(x) => x
+  | None => defaultValue
+  };
+
+/* example */
+"2D"
+|> parseCard
+|> optionMap(renderCard)
+|> optionWithDefault("-- unknown card --")
+|> Js.log;
+```
+
+And now we have everything we need! Working functions, great confidence that they do what we want them to do, elegant implementations.
+
+_Note:_ have you noticed the inferred type for `optionWithDefault`? It's `('a, option('a)) => 'a`, which does not mention strings. `'a` is a generic type, so that means this function will work with options of _anything_. The only thing we have to be careful with is that the default value passed must be of the same type inside the option :) That means that `optionWithDefault(0, Some(5))` or `optionWithDefault(Card(Ace, Diamonds), None)` are both valid! (and the same thing happens to `optionMap`, check it out).
+
+We can also divide our functions into modules. In Reason, every file is a module, but we can also define modules inside a file, so let's do it to organize better our functions:
+
+```js
+type suit = (...)
+type value = (...)
+type card = (...)
+
+module Parser = {
+  let parseNumValue = (...)
+  let parseValue = (...)
+  let parseSuit = (...)
+  let parseCard = (...)
+};
+
+module RenderToString = {
+  let numToString = (...)
+  let valueToString = (...)
+  let suitToString = (...)
+  let renderCard = (...)
+  /* let's store this value here */
+  let defaultErrorCard = "-- unknown card --";
+};
+
+module Option = {
+  let map = (...)
+  let withDefault = (...)
+};
+
+/* We can call functions inside modules easily: */
+"JH"
+|> Parser.parseCard
+|> Option.map(RenderToString.renderCard)
+|> Option.withDefault(RenderToString.defaultErrorCard)
+|> Js.log;
+```
+
+Good, and we can extract the modules as single files if they get too large. I like the fact that we can have exactly the same abstraction as code and as a file. That makes the extraction of files mostly an organization issue.
+
+## Spec Change!
+
+As I've done in the [Learning Elm series](https://lucasmreis.github.io/blog/learning-elm-part-1/), let's change the specs. Let's suppose we want also to parse "J" into a joker card, and render it as "Joker". How would we represent a joker card? It does not have a value or a suit. So probably the best place to represent it is by changing the card type itself:
+
+```js
+type card =
+  | OrdinaryCard(value, suit)
+  | Joker;
+```
+
+We can already see the compiler complaining, and that's another benefit of having this card representation defined. The compiler uses this information, and help us pointing the places that need tobe changed so our application works as intended.
+
+The function that we need to change is, according to the compiler, `renderCard`. So let's change it to deal with the new card type:
+
+```js
+let renderCard = card =>
+  switch card {
+  | OrdinaryCard(value, suit) =>
+    valueToString(value) ++ " of " ++ suitToString(suit)
+  | Joker => "Joker"
+  };
+```
+
+Simple and easy! The compiler also says `parseCard` needs some work, so use the opportunity to think about how to parse "J" into the Joker representation. The "J" string is structured differently, since it does not have a defined suit. So it may be better not to change `parseValue` or `parseSuit`. Let's try to pattern match "J" before, and then call our parse function to parse the string if we already did not identify it's a Joker.
+
+Let's first rename `parseCard` to `parseOrdinaryCard`, and then make sure we handle "J" in a new `parseCard` function:
+
+```js
+let parseOrdinaryCard = cardStr => {
+  let length = Js.String.length(cardStr);
+  let suitStr = Js.String.sliceToEnd(~from=length - 1, cardStr);
+  let valueStr = Js.String.slice(~from=0, ~to_=length - 1, cardStr);
+  switch (parseValue(valueStr), parseSuit(suitStr)) {
+  | (Some(value), Some(suit)) => OrdinaryCard(value, suit) |> some
+  | _ => None
+  };
+};
+
+let parseCard = cardStr =>
+  switch cardStr {
+  | "J" => Some(Joker)
+  | str => parseOrdinaryCard(str)
+  };
+
+/* example */
+"J"
+|> Parser.parseCard
+|> Option.map(RenderToString.renderCard)
+|> Option.withDefault(RenderToString.defaultErrorCard)
+|> Js.log;
+```
+
+And we're done. I'm happy Reason changes to the syntax did not affect the refactoring super powers of Ocaml :)
+
+The final code for the function [can be found here](https://github.com/lucasmreis/reason-exp/blob/master/src/second.re).
+
+## Conclusion
