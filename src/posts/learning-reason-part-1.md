@@ -2,7 +2,7 @@
 title: Learning ReasonML, part 1
 lead: An Interesting Trade Off Between Reliability And Ease Of Adoption
 template: post.hbt
-date: 2016-04-22
+date: 2017-12-31
 tags: functional, types, reason
 draft: true
 ---
@@ -753,3 +753,7 @@ And we're done. I'm happy Reason changes to the syntax did not affect the refact
 The final code for the function [can be found here](https://github.com/lucasmreis/reason-exp/blob/master/src/second.re).
 
 ## Conclusion
+
+* Easy to start
+* Same amazing benefits of Fable, a lot of Elm benefits
+* Discord very responsive
