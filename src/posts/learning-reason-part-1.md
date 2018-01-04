@@ -3,7 +3,7 @@ title: Learning ReasonML, part 1
 lead: An Interesting Trade Off Between Reliability And Ease Of Adoption
 template: post.hbt
 date: 2017-12-31
-tags: functional, types, reason
+tags: functional, types, reason, reasonml
 draft: true
 ---
 
@@ -11,7 +11,7 @@ Throughout my professional life I've worked in a lot of large applications that 
 
 While searching solutions to these problems, I found out that different programming languages patterns and practices were amazing sources of inspiration. Learning Clojure helped me understand the benefits of immutability. Learning Elm helped me understand the benefits of strong typing. All of that knowledge helped me be a better developer in a lot of ways, and made my javascript code better. Not only that, a lot of the javascript ecossystem itself is [based on other languages patterns and practices](https://redux.js.org/docs/introduction/PriorArt.html).
 
-And that's what brings me to ReasonML. The path to Reason was paved this way:
+And that's what brings me to ReasonML. The path to ReasonML was paved this way:
 
 1. ClojureScript: immutability / pragmatic philosophy / simplicity as a core value. But I felt that some problems related to reliability and safety were still present, and I thought that strong typing could help.
 
@@ -19,7 +19,7 @@ And that's what brings me to ReasonML. The path to Reason was paved this way:
 
 3. F# / Fable: feels like a sweet spot, a pragmatic Elm for the front end, and also a complete ecossystem with a mature runtime for everything else. But I felt that Fable is a tool made for people with F# / .Net background, not a javascript background.
 
-And that's how I got to Reason. It's a new syntax for Ocaml, which F# is heavily based on. They are from a family of languages called "ML", which provide this nice developing experience due to the type system and compiler help. Also, the language creators are heavily targeting javascript developers, so they are working really hard to make the language easy to adopt on current javascript teams.
+And that's how I got to ReasonML. It's a new syntax for Ocaml, which F# is heavily based on. They are from a family of languages called "ML", which provide this nice developing experience due to the type system and compiler help. Also, the language creators are heavily targeting javascript developers, so they are working really hard to make the language easy to adopt on current javascript teams.
 
 _Note:_ I'm a curious person, and an avid learner. I'm always looking for a new way to look at problems I face in my day to day life, and it does not mean at all that I did not find those listed languages useful! Clojure is great, Elm is great, F# is great, and - why not - javascript is great! :)
 
@@ -43,7 +43,7 @@ When learning Elm, I immediately jumped to a "type driven" solution. Even though
 
 ## Setting Up
 
-Let's start by installing Reason's CLI `bsb` and create a new project (as described [in the official website](https://reasonml.github.io/)):
+Let's start by installing ReasonML's CLI `bsb` and create a new project (as described [in the official website](https://reasonml.github.io/)):
 
 # CHECK THIS COMMANDS MAYBE IT'S BETTER https://reasonml.github.io/guide/editor-tools/global-installation
 
@@ -52,11 +52,11 @@ $ npm install -g bs-platform
 $ bsb -init my-first-app -theme basic-reason
 ```
 
-I'm using VS Code with the Reason extension installed. It's a great dev environment, with auto complete, auto formatting, and other niceties. A note on auto formatting: we want to focus on actually solving a problem, and it's a good thing that problems like indentation are not getting in our way. That is something Reason has in common with Elm, and projects like Prettier are trying to do with javascript. I strongly recommend it!
+I'm using VS Code with the ReasonML extension installed. It's a great dev environment, with auto complete, auto formatting, and other niceties. A note on auto formatting: we want to focus on actually solving a problem, and it's a good thing that problems like indentation are not getting in our way. That is something ReasonML has in common with Elm, and projects like Prettier are trying to do with javascript. I strongly recommend it!
 
 In a real world application that performance is a key requirement, we always need to be aware of bundle size, and be careful with the amount and complexity of the code generated. So I'm always keeping an eye in the compilation result: if we are writing a `demo.re` file, Bucklescript will generate a `demo.bs.js` file in the same folder. Also, for small functions, I recommend copy and pasting to the [Try Reason](https://reasonml.github.io/try/) website, and see both the generated JS and equivalent Ocaml code in real time!
 
-**A tip**: when googling for help, it's usually the case that we find some Ocaml code that could help us. Use the Try Reason to convert it to Reason syntax!
+**A tip**: when googling for help, it's usually the case that we find some Ocaml code that could help us. Use the Try ReasonML to convert it to ReasonML syntax!
 
 ## First Approach
 
@@ -163,7 +163,7 @@ let parseAndRenderSuit = suitStr =>
 "C" |> parseAndRenderSuit |> Js.log;
 ```
 
-`switch` is the syntax for pattern matching in Reason. It works somewhat like a switch statement in JS, but more powerful: among other features, the compiler will tell you if you took care of all the possible values for the input. That's one of the key features of ML languages that makes our code more reliable. For the above function, we get the following compiler warning:
+`switch` is the syntax for pattern matching in ReasonML. It works somewhat like a switch statement in JS, but more powerful: among other features, the compiler will tell you if you took care of all the possible values for the input. That's one of the key features of ML languages that makes our code more reliable. For the above function, we get the following compiler warning:
 
 ```
 You forgot to handle a possible value here, for example: ""
@@ -301,7 +301,7 @@ But this implementation can improve.
 
 ## A Second Approach: Option
 
-My main issue with the previous implementation are the two `"-- unknown something --"` possible values for the value and suit parsers. There's a very interesting way of dealing with cases like this in Reason: the Option type. It represents values that may or may not be present, and that's exactly what the output of the function should be: we may or may not have a valid suit:
+My main issue with the previous implementation are the two `"-- unknown something --"` possible values for the value and suit parsers. There's a very interesting way of dealing with cases like this in ReasonML: the Option type. It represents values that may or may not be present, and that's exactly what the output of the function should be: we may or may not have a valid suit:
 
 ```js
 let parseAndRenderSuit = suitStr =>
@@ -316,7 +316,7 @@ let parseAndRenderSuit = suitStr =>
 
 VS Code shows us that now the function is of type `(string) => option(string)`, which is much more descriptive of what it does. It makes the code more _expressive_.
 
-Option is a safe way of dealing with data that may not be present. Instead of having the null and undefined checks in javascript, that's the way we can work with an option in Reason:
+Option is a safe way of dealing with data that may not be present. Instead of having the null and undefined checks in javascript, that's the way we can work with an option in ReasonML:
 
 ```js
 /* Let's say we want to log a string from a string option: */
@@ -400,7 +400,7 @@ const CardSuitConstants = {
 
 Now if we want to check against a value, or check if a given string is a valid suit, we import and use this object.
 
-In Reason, we would represent the suits this way:
+In ReasonML, we would represent the suits this way:
 
 ```js
 type suit = Hearts | Diamonds | Clubs | Spades;
@@ -420,7 +420,7 @@ const card = {
 
 The weakness of a representation like that is that "impossible" cards are really easy to be represented. So we need to make sure we are always testing not only for `value` being equal `CardValueConstants.NUMBER`, but also if there's a `number` property present and it's a valid number.
 
-In Reason, we would represent the values as:
+In ReasonML, we would represent the values as:
 
 ```js
 type value =
@@ -524,7 +524,7 @@ let parseValue = valueStr =>
   };
 ```
 
-We are defining outputs for the "A", "K", "Q" and "J" inputs, and calling the `parseNumValue` function with the value if it did not match any of the previous. The compiler will not let us continue if our `parseNumValue` does not return a suit option! Let's implement it, and learn some new Reason concepts:
+We are defining outputs for the "A", "K", "Q" and "J" inputs, and calling the `parseNumValue` function with the value if it did not match any of the previous. The compiler will not let us continue if our `parseNumValue` does not return a suit option! Let's implement it, and learn some new ReasonML concepts:
 
 ```js
 let parseNumValue = numStr => {
@@ -612,7 +612,7 @@ The incompatible parts:
   option(card)
 ```
 
-_Note:_ Elm is known for having amazing error messages - and it really does have them. I'm really happy they were very vocal about it, and that this practice is now "leaking" to other languages! Congratulations to the Reason / Bucklescript team to borrow the right features form different projects.
+_Note:_ Elm is known for having amazing error messages - and it really does have them. I'm really happy they were very vocal about it, and that this practice is now "leaking" to other languages! Congratulations to the ReasonML / Bucklescript team to borrow the right features form different projects.
 
 Alright, so we can't pipe our functions because `parseCard` return a option(card), and `renderCard`'s input is a card. Let's use this opportunity to build a couple of helper functions!
 
@@ -632,7 +632,7 @@ This is a higher order function, so now we can use:
 "8H" |> parseCard |> optionMap(renderCard) |> Js.log;
 ```
 
-And `renderCard` will only be called if `parseCard` returns a Some. But, after saving the file, we can see that the declaration of the function is changed by the code formatter to `let optionMap = (fn, opt) => (...)`! Does it mean that Reason does not like higher order functions? No, it's the opposite: in Reason and most other ML languages, _all the functions are curried by default_. That means that, differently from usual JS functions, if you call a function with less input parameters than the function was expecting, you will have another function as a result, that will expect the other parameters. A classic simple example:
+And `renderCard` will only be called if `parseCard` returns a Some. But, after saving the file, we can see that the declaration of the function is changed by the code formatter to `let optionMap = (fn, opt) => (...)`! Does it mean that ReasonML does not like higher order functions? No, it's the opposite: in ReasonML and most other ML languages, _all the functions are curried by default_. That means that, differently from usual JS functions, if you call a function with less input parameters than the function was expecting, you will have another function as a result, that will expect the other parameters. A classic simple example:
 
 ```js
 /* (int, int) => (int) */
@@ -668,7 +668,7 @@ And now we have everything we need! Working functions, great confidence that the
 
 _Note:_ have you noticed the inferred type for `optionWithDefault`? It's `('a, option('a)) => 'a`, which does not mention strings. `'a` is a generic type, so that means this function will work with options of _anything_. The only thing we have to be careful with is that the default value passed must be of the same type inside the option :) That means that `optionWithDefault(0, Some(5))` or `optionWithDefault(Card(Ace, Diamonds), None)` are both valid! (and the same thing happens to `optionMap`, check it out).
 
-We can also divide our functions into modules. In Reason, every file is a module, but we can also define modules inside a file, so let's do it to organize better our functions:
+We can also divide our functions into modules. In ReasonML, every file is a module, but we can also define modules inside a file, so let's do it to organize better our functions:
 
 ```js
 type suit = (...)
@@ -758,12 +758,14 @@ let parseCard = cardStr =>
 |> Js.log;
 ```
 
-And we're done. I'm happy Reason changes to the syntax did not affect the refactoring super powers of Ocaml :)
+And we're done. I'm happy ReasonML changes to the syntax did not affect the refactoring super powers of Ocaml :)
 
 The final code for the function [can be found here](https://github.com/lucasmreis/reason-exp/blob/master/src/second.re).
 
 ## Conclusion
 
-* Easy to start
-* Same amazing benefits of Fable, a lot of Elm benefits
-* Discord very responsive
+First of all, all the benefits present in Fable are present in ReasonML - and that's great. Just like Fable, it's a nice pragmatic Elm. And I thought that, from all the languages, it was the easier to just start a project - I did not have to install any different tools, and the main packages are in npm. So that's a win for ReasonML :)
+
+In the next part of this series, I'll start writing an actual web app, and I'll use the React integration library called [ReasonReact](). I think that this is where all the mentioned languages will differ the most. In the javascript world, I'm finding myself using a "pure React" model more and more, and it seems ReasonReact will work well together with it. Let's find it out together!
+
+A last comment: ReasonML's [Discord channel](https://discordapp.com/invite/reasonml) is a great place, and the language maintainers are very active and helpful. Thank you for helping and answering questions so quickly!
