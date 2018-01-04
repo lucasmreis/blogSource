@@ -7,15 +7,25 @@ tags: functional, types, reason
 draft: true
 ---
 
-* Talk about the quest for reliability / safety
-* ClojureScript is great because immutability is the default, but it is still dynamic
-* Elm is great because it's the safest you can get, but the trade off is small number of features and costly interaction with JS
-* Fable is great because it is as pragmatic as ClojureScript, with strong typing from ML. But it feels like it's built for current F# / .Net users
-* Reason seems to be in the same pragmetic / safety position as Fable, but built for current JS users. Let's try it!
+Throughout my professional life I've worked in a lot of large applications that were in production for years. There was one thing in common with all of them: a lot of the code was overly complex, and it was really difficult to both fix bugs and add new features.
+
+While searching solutions to these problems, I found out that different programming languages patterns and practices were amazing sources of inspiration. Learning Clojure helped me understand the benefits of immutability. Learning Elm helped me understand the benefits of strong typing. All of that knowledge helped me be a better developer in a lot of ways, and made my javascript code better. Not only that, a lot of the javascript ecossystem itself is [based on other languages patterns and practices](https://redux.js.org/docs/introduction/PriorArt.html).
+
+And that's what brings me to ReasonML. The path to Reason was paved this way:
+
+1. ClojureScript: immutability / pragmatic philosophy / simplicity as a core value. But I felt that some problems related to reliability and safety were still present, and I thought that strong typing could help.
+
+2. Elm: yes, strong typing really helps, and working with such a powerful compiler feels great. But I missed the pragmatic nature of Clojure.
+
+3. F# / Fable: feels like a sweet spot, a pragmatic Elm for the front end, and also a complete ecossystem with a mature runtime for everything else. But I felt that Fable is a tool made for people with F# / .Net background, not a javascript background.
+
+And that's how I got to Reason. It's a new syntax for Ocaml, which F# is heavily based on. They are from a family of languages called "ML", which provide this nice developing experience due to the type system and compiler help. Also, the language creators are heavily targeting javascript developers, so they are working really hard to make the language easy to adopt on current javascript teams.
+
+_Note:_ I'm a curious person, and an avid learner. I'm always looking for a new way to look at problems I face in my day to day life, and it does not mean at all that I did not find those listed languages useful! Clojure is great, Elm is great, F# is great, and - why not - javascript is great! :)
+
+I like to start learning a language with a very simple and well defined spec, usually a function. Trying to implement a UI, or anything involving a lot of side effects is usually counter productive for me. And by writing a simple function, we already can learn a lot about the development workflow, the tooling, and the ecosystem, which are very important and deserve special attention.
 
 ## The Spec
-
-I like to start learning a language with a very simple and well defined spec, usually a function. Trying to implement UI, or anything involving a lot of side effects is usually counter productive for me. And by writing a simple function, we already can learn a lot about the development workflow, the tooling and the ecosystem, which are very important and deserve special attention.
 
 I'll implement the same algorithm I implemented in [Learning Elm, part 1](https://lucasmreis.github.io/blog/learning-elm-part-1/). Recapping:
 
