@@ -352,27 +352,94 @@ export { Card };
 
 And that's it - our application should be running flawlessly with the new code!
 
+## Integrating A Stateful Component
 
+Stateful components in ReasonReact are interesting - we define the way state is update by defining actions and a reducer. Sounds familiar, right? Yes, it's a mini-redux in every component :) It's a great pattern, and feels even better with the compiler help from the strong types.
 
+Our stateful component is simple: our cards start out face down, and if a user clicks one of them, they're flipped over. So let's start by creating a `CardContainer.re` file alongside `CardView.re`, and describe our action and our state:
 
-3. integrate stateless component
+```js
+type action =
+  | Flip;
 
-* extract view
-* npm install, add to bsconfig:
-  "reason": {"react-jsx" : 2},
-  "bs-dependencies": ["reason-react"],
-* make simple component, remember wrapToJs
-* props, remember to convert
+type state = {flipped: bool};
+```
 
-4. Stateful
+Our action is usually defined as a [Variant](https://reasonml.github.io/docs/en/variant.html). In our case the only action the user can take is flipping a card, so we only have the one case `Flip`. Our state is going to be a record with a single boolean field, that represents a card being flipped or not. 
 
-* reducer component
-* remove wrapper from view, put here
-* initial state, com state sendo um boolean
-* we're in reason world! better flip type, Flipped / NotFlipped on a different module
-* action: Flip
-* reducer, need to return a update type
+Now we can define our component. Remember, first we create a base component record, and then a make function. For stateful components we use `ReasonReact.reducerComponent` base, and need to override not only `render`, but also `initialState` and `reducer`:
 
-Works, great!
+```js
+let component = ReasonReact.reducerComponent("CardContainer");
 
-Next steps: rewrite App.js.
+let make = (~code, ~imageSource, _self) => {
+  ...component,
+  initialState: () => {flipped: true},
+  reducer: (_action, state) => ReasonReact.Update({flipped: ! state.flipped}),
+  render: self =>
+    <CardView
+      code
+      imageSource
+      flipped=self.state.flipped
+      onClick=(_event => self.send(Flip))
+    />
+};
+```
+
+`initialState` is a simple function that returns a record of the type `state`. In our case, our cards start flipped. 
+
+`reducer` is a function that takes an action and the current state, and returns a value of the `ReasonReact.update` variant type. We're returning the `ReasonReact.Update(state)` case, which results in a simple state update without side effects, which is what we want to happen when the user flips a card. We'll talk more about the `ReasonReact.update` type in the next part of this series!
+
+The last part of this component is the callback defined for `onClick`. We're using `self.send`, which in fact "sends" the `Flip` action to the reducer. And our component is complete!
+
+See that our render function is making reference to `CardView`. Since we're in ReasonML land, we do not need a wrapper for the card view anymore, so we can delete from the `CardView` file. But since the card container will be imported in JS, we need to wrap it instead:
+
+```js
+let default =
+  ReasonReact.wrapReasonForJs(~component, jsProps =>
+    make(~code=jsProps##code, ~imageSource=jsProps##imageSource, [||])
+  );
+```
+
+That's all we need. The whole file should look like this now:
+
+```js
+type action =
+  | Flip;
+
+type state = {flipped: bool};
+
+let component = ReasonReact.reducerComponent("CardContainer");
+
+let make = (~code, ~imageSource, _self) => {
+  ...component,
+  initialState: () => {flipped: true},
+  reducer: (_action, state) => ReasonReact.Update({flipped: ! state.flipped}),
+  render: self =>
+    <CardView
+      code
+      imageSource
+      flipped=self.state.flipped
+      onClick=(_event => self.send(Flip))
+    />
+};
+
+let default =
+  ReasonReact.wrapReasonForJs(~component, jsProps =>
+    make(~code=jsProps##code, ~imageSource=jsProps##imageSource, [||])
+  );
+```
+
+Now we can import this component directly in our `Card/index.js` file:
+
+```js
+// Card/index.js
+import "./Card.css";
+import CardContainer from "./CardContainer.bs";
+
+export { CardContainer as Card };
+```
+
+If you prefer, instead of importing the CSS file here, you could add a `[%%raw "import './Card.css'"];` line in the beginning of the `CardView.re` file, with the same effect.
+
+The final code for the integration with the stateful component [can be found here](https://github.com/lucasmreis/learning-reasonml/tree/integrating_stateful_2/part-2).
