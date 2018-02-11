@@ -255,7 +255,7 @@ class Card extends React.Component {
 }
 ```
 
-We're going to rewrite the CardView component. We're going to use the [ReasonReact]() wrapper to React, which is the current standard way of writing React in ReasonML. After `npm install --save reason-react`, change the `bsconfig.json` file to include these two properties:
+We're going to rewrite the CardView component. We're going to use the [ReasonReact](https://reasonml.github.io/reason-react/) wrapper to React, which is the current standard way of writing React in ReasonML. After `npm install --save reason-react`, change the `bsconfig.json` file to include these two properties:
 
 ```js
 {
@@ -443,3 +443,16 @@ export { CardContainer as Card };
 If you prefer, instead of importing the CSS file here, you could add a `[%%raw "import './Card.css'"];` line in the beginning of the `CardView.re` file, with the same effect.
 
 The final code for the integration with the stateful component [can be found here](https://github.com/lucasmreis/learning-reasonml/tree/integrating_stateful_2/part-2).
+
+## Conclusions
+
+That's the third strong typed language I've used for front end programming, together with Elm and F#. First of all, it consolidates the feelings that _this is the way to go_. Javascript's dynamic nature gives you a lot of power, but when we're writing larger and larger applications, the types give you a much saner environment. Refactoring does not feel that scary, tootling helps you much more, things are better documented, and so on.
+
+Now, comparing ReasonML to the other two languages. Elm's architecture (shared by F# with the [Fable-Elmish framework](https://fable-elmish.github.io/elmish/)) is really simple and powerful. It influenced the whole front end world, and ReasonReact's reducer components were definitely inspired by it. In Elm, state and actions handling is done separately from the visual components, in kind of a "global" way. In contrast, ReasonReact embraces the React way of doing things, which is the "everything is a component" mental model. The interesting part is: the reducer components feel a lot like Elm, so in practice, a ReasonReact application feels like composing small Elm applications! By doing that, it's also pretty easy to not only integrate your ReasonML code into your React application, it's relatively easy to get all the benefits from modern tooling, like code splitting and dynamic importing components. This and the fact that the generated JS code is really well optimized are the great benefits of ReasonML over the other two.
+
+Where do Elm and F# perform better than ReasonML? Elm is still the safer option out there, due to the stricter JS integration. It's much, much easier to avoid runtime errors with it. Also, it has great docs and well thought out standard libraries. F# has the benefit that it can be used both on the frontend and backend of your application, and you can have access to a lot of the .Net features with it. And, as a personal note, I understand the decision to make ReasonML's syntax more "javascript-like", but I feel both Elm's and F#'s syntax are way better and more pleasurable to work with.
+
+## Next Steps
+
+In the third part of this series I'll try to [rewrite `App.js` with ReasonReact](https://github.com/lucasmreis/learning-reasonml/blob/master/part-2/src/App.js)! Let's see how the language feels when we need to perform side effects, work with JSON data, and do some async work. 
+
