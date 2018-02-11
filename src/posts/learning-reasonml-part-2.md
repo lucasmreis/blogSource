@@ -64,7 +64,6 @@ Open two terminals, run `npm start` on one of them and `npm run start:reason` on
 First, let's look at the structure of the application:
 
 * The app follows CRA initial structure: all application code is inside the `src` folder, and the React setup is in the `index.js` file.
-
 * `App.js` is the main container: it fetches data from the deck API, stores it, and expose a `draw` action that fetches three new cards:
 
 ```js
@@ -454,5 +453,5 @@ Where do Elm and F# perform better than ReasonML? Elm is still the safer option 
 
 ## Next Steps
 
-In the third part of this series I'll try to [rewrite `App.js` with ReasonReact](https://github.com/lucasmreis/learning-reasonml/blob/master/part-2/src/App.js)! Let's see how the language feels when we need to perform side effects, work with JSON data, and do some async work. 
+In the third part of this series I'll try to [rewrite `App.js` with ReasonReact](https://github.com/lucasmreis/learning-reasonml/blob/master/part-2/src/App.js)! Let's see how the language feels when we need to perform side effects, work with JSON data, and do some async work. See you there!
 
