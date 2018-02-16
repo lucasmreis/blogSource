@@ -6,15 +6,18 @@ date: 2018-01-18
 tags: functional, types, reason, reasonml
 ---
 
+When learning a new language, it's great to have the opportunity to write a small module and be able to integrate it with a real world application. Fortunately, one of the main objectives of the ReasonML team is smooth JS integration, so let's see if it delivers!
+
 ## The Project
 
-Let's start with an existing React application. [Here's the code](https://github.com/lucasmreis/learning-reasonml/tree/master/part-2), and [here's the working app](https://simple-deck-example.netlify.com/). The app "creates" a deck of cards using [this great open API](http://deckofcardsapi.com/), and then the user can draw three cards at a time using a button. The cards are drawn flipped, and they flip when clicked.
+Let's start with an existing React application. [Here's the code](https://github.com/lucasmreis/learning-reasonml/tree/master/part-2), and [here's the working app](https://simple-deck-example.netlify.com/). The app "creates" a deck of cards using [this great open API](http://deckofcardsapi.com/), and then, the user can draw three cards at a time using a button. The cards are drawn face down, and turn face up when clicked.
 
-I think this project is interesting because it has some key real world features: global and local state handling, and remote data fetching both on startup and user interaction. In this post I'll integrate ReasonML code in three different ways: first a function (the one we [wrote in the first part](http://lucasmreis.github.io/blog/learning-reasonml-part-1/)), then a stateless React component, and then a stateful React component.
+This project is interesting because it has some key real world features: global and local state handling, and remote data fetching both on startup and user interaction. In this post I'll integrate ReasonML code in three different ways: first with a function (the one we [wrote in the first part of this series](http://lucasmreis.github.io/blog/learning-reasonml-part-1/)), then with a stateless React component, and finally with a stateful React component.
 
 ## Having ReasonML Files In A JS Project
 
-We want our workflow to be as simple as possible. I like the idea of creating `.re` files throughout the project where I need them, and automatically compile them to `.bs.js` files in the same location. To achieve that, let's first install `bs-platform` to [our react application](https://github.com/lucasmreis/learning-reasonml/tree/master/part-2) with npm:
+We want our workflow to be as simple as possible. I like the idea of creating `.re` files throughout the project where I need them, and automatically compiling them to `.bs.js` files in the same location. To achieve that, let's first install `bs-platform` to [our react application](https://github.com/lucasmreis/learning-reasonml/tree/master/part-2) with npm:
+
 
 ```
 $ npm install --save-dev bs-platform
@@ -43,7 +46,7 @@ Then we create `bsconfig.json` in the root folder:
 }
 ```
 
-I this file we're saying that we should compile every file in the `src` folder and subfolders. Also, since our project is a [Create React App](https://github.com/facebook/create-react-app) project that uses webpack for bundling, we're compiling to ES6 modules. I found that the official documentation [has a good section on the config file](https://bucklescript.github.io/docs/en/build-configuration.html).
+In this file we're saying that we should compile every file in the `src` folder and subfolders. Also, since our project is a [Create React App](https://github.com/facebook/create-react-app) project that uses webpack for bundling, we're compiling to ES6 modules. I found that the official documentation [has a good section on the config file](https://bucklescript.github.io/docs/en/build-configuration.html).
 
 Now we only need to update the npm scripts to take ReasonML into account:
 
@@ -57,14 +60,14 @@ Now we only need to update the npm scripts to take ReasonML into account:
 (...)
 ```
 
-Open two terminals, run `npm start` on one of them and `npm run start:reason` on the other one, and we're now ready to start writing ReasonML in our React project!
+Open two terminals, run `npm start` in one of them and `npm run start:reason` in the other one, and we're ready to start writing ReasonML in our React project!
 
 ## Integrating A Function
 
 First, let's look at the structure of the application:
 
 * The app follows CRA initial structure: all application code is inside the `src` folder, and the React setup is in the `index.js` file.
-* `App.js` is the main container: it fetches data from the deck API, stores it, and expose a `draw` action that fetches three new cards:
+* `App.js` is the main container; it fetches data from the deck API, stores it, and exposes a `draw` action that fetches three new cards:
 
 ```js
 // State shape:
@@ -133,9 +136,9 @@ export { Card };
 
 Each card has a `flipped` boolean state that is initialized as true. The card is rendered either in a flipped state or normal state using CSS classes. `flipped` changes when the user clicks the card. Simple, direct React code.
 
-An initial, super low risk place to integrate ReasonML could be the image's alt attribute. `code` is a value returned from the Deck API, that looks like "6C", "QH" or "AD". On [part 1 of our series](http://lucasmreis.github.io/blog/learning-reasonml-part-1/) we implemented a function that transforms a string like that into a complete "Six of Clubs" or "Queen of Hearts", so let's use it!
+An initial, super low risk place to integrate ReasonML could be the image's alt attribute. `code` is a value returned from the Deck API, that looks like "6C", "QH" or "AD". In [part 1 of our series](http://lucasmreis.github.io/blog/learning-reasonml-part-1/) we implemented a function that transforms a string like this into a complete "Six of Clubs" or "Queen of Hearts", so let's use it!
 
-Create a `ParseAndRenderCard.re` file in the same folder as the Card component, and copy and paste the code to it. If Bucklescript is setup correctly and running, you should already be seeing a `ParseAndRenderCard.bs.js` file in the same folder (I'm a little bit scaried with how fast this compiler is, hehe). I added this to the end of the file to be able to export the function:
+Create a `ParseAndRenderCard.re` file in the same folder as the Card component, and copy and paste the code into it. If Bucklescript is setup correctly and running, you should already be seeing a `ParseAndRenderCard.bs.js` file in the same folder (I'm a little bit scared with how fast this compiler is, hehe). I added this to the end of the file to be able to export the function:
 
 ```js
 (...)
@@ -147,7 +150,7 @@ let parseAndRender = cardStr =>
   |> Option.withDefault(RenderToString.defaultErrorCard);
 ```
 
-And we can see that the end of the compiled file look something like this:
+And we can see that the end of the compiled file looks something like this:
 
 ```js
 (...)
@@ -164,7 +167,7 @@ export {
 }
 ```
 
-`parseAndRender` is exactly what we need. Now, on the `Card/index.js` file, import the function and use it:
+`parseAndRender` was exactly what we needed. Now, on the `Card/index.js` file, import the function and use it:
 
 ```js
 import { parseAndRender } from "./ParseAndRenderCard.bs";
@@ -184,15 +187,15 @@ And we're done! That's it, we added a ReasonML function to our JS app, in three 
 
 1. Install and setup the Bucklescript/ReasonML compiler
 2. Write a ReasonML function in `.re` files alongside your js files, and let the compiler generate the `.js` files
-3. Import the generated JS function in your code
+3. Import the generated JS function into your code
 
-ML languages like ReasonML are great for writing intricate logic, so I think that writing functions in it and importing to your React project can already bring benefits. But let's take it a step further and write a whole stateless component in ReasonML.
+ML languages like ReasonML are great for writing intricate logic, so I think that writing functions in them and importing to your React project can already bring benefits. But let's take it a step further and write a whole stateless component in ReasonML.
 
 The final code for the project with a ReasonML function integration [can be found here](https://github.com/lucasmreis/learning-reasonml/tree/integrating_function/part-2).
 
 ## Integrating A Stateless Component
 
-Now let's create a React component using ReasonML. As always, let's start simple - and I think a stateless component is a good opportunity for that. First of all, we need to refactor our Card component - let's use the Container / View pattern [described in this blog post](http://lucasmreis.github.io/blog/simple-react-patterns/). Remember the card component:
+Now let's create a React component using ReasonML. As always, let's start simple - I think a stateless component is a good opportunity for that. First of all, we need to refactor our Card component - let's use the Container / View pattern [described in this blog post](http://lucasmreis.github.io/blog/simple-react-patterns/). Remember the card component:
 
 ```js
 class Card extends React.Component {
@@ -254,7 +257,7 @@ class Card extends React.Component {
 }
 ```
 
-We're going to rewrite the CardView component. We're going to use the [ReasonReact](https://reasonml.github.io/reason-react/) wrapper to React, which is the current standard way of writing React in ReasonML. After `npm install --save reason-react`, change the `bsconfig.json` file to include these two properties:
+We're going to rewrite the CardView component. We're going to use the [ReasonReact](https://reasonml.github.io/reason-react/) wrapper from React, which is the current standard way of writing React in ReasonML. After `npm install --save reason-react`, change the `bsconfig.json` file to include these two properties:
 
 ```js
 {
@@ -310,14 +313,14 @@ let default =
 );
 ``` 
 
-The `wrapReasonForJs` function receives a component as a parameter, and a function that maps that dynamic js props to ReasonML typed props. The component should be the base one we used in our make function. The function should call make itself, with the transformed props that were passed to the component in JS. Some comments on it:
+The `wrapReasonForJs` function receives a component as a parameter, and a function that maps those dynamic js props to ReasonML typed props. The component should be the base one we used in our make function. The function should call make itself, with the transformed props that were passed to the component in JS. Some comments on it:
 
 * `~component` is a shorthand for `~component=component`
 * `##` is the way to get the value of a property in a regular JS object. So `jsProps##code` is compiled to `jsProps.code`
 * Boolean ReasonML types are _not_ represented as `true` or `false` in Javascript! That's why we need to use `Js.to_bool` to convert `jsProps##flipped`
-* Arrays are represented by `[|` and `|]` in ReasonML. If we use `[` and `]`, we're actually creating a _list_. The [docs explain well the difference](https://reasonml.github.io/docs/en/list-and-array.html), and I suggest you play a little with both in [Try Reason](https://reasonml.github.io/en/try.html) to see the differences in the compiled code!
+* Arrays are represented by `[|` and `|]` in ReasonML. If we use `[` and `]`, we're actually creating a _list_. The [docs explain the difference well](https://reasonml.github.io/docs/en/list-and-array.html), and I suggest you play a little with both in [Try Reason](https://reasonml.github.io/en/try.html) to see the differences in the compiled code!
 
-Now we can go to our `Card/index.html` file, erase the previous CardView component and use our brand new ReasonML one:
+Now we can go to our `Card/index.html` file, erase the previous CardView component, and use our brand new ReasonML one:
 
 ```js
 import React from "react";
@@ -353,7 +356,7 @@ And that's it - our application should be running flawlessly with the new code!
 
 ## Integrating A Stateful Component
 
-Stateful components in ReasonReact are interesting - we define the way state is update by defining actions and a reducer. Sounds familiar, right? Yes, it's a mini-redux in every component :) It's a great pattern, and feels even better with the compiler help from the strong types.
+Stateful components in ReasonReact are interesting - we define the way state is updated by defining actions and a reducer. Sounds familiar, right? Yes, there's a mini-redux in every component :) It's a great pattern, and feels even better with the compiler help from the strong types.
 
 Our stateful component is simple: our cards start out face down, and if a user clicks one of them, they're flipped over. So let's start by creating a `CardContainer.re` file alongside `CardView.re`, and describe our action and our state:
 
@@ -364,9 +367,9 @@ type action =
 type state = {flipped: bool};
 ```
 
-Our action is usually defined as a [Variant](https://reasonml.github.io/docs/en/variant.html). In our case the only action the user can take is flipping a card, so we only have the one case `Flip`. Our state is going to be a record with a single boolean field, that represents a card being flipped or not. 
+Our action is usually defined as a [Variant](https://reasonml.github.io/docs/en/variant.html). In our case, the only action the user can take is flipping a card, so we only have the one case `Flip`. Our state is going to be a record with a single boolean field, that represents a card being flipped or not. 
 
-Now we can define our component. Remember, first we create a base component record, and then a make function. For stateful components we use `ReasonReact.reducerComponent` base, and need to override not only `render`, but also `initialState` and `reducer`:
+Now we can define our component. Remember, first we create a base component record, and then a make function. For stateful components we use `ReasonReact.reducerComponent` base and we need to override not only `render`, but also `initialState` and `reducer`:
 
 ```js
 let component = ReasonReact.reducerComponent("CardContainer");
@@ -391,7 +394,7 @@ let make = (~code, ~imageSource, _self) => {
 
 The last part of this component is the callback defined for `onClick`. We're using `self.send`, which in fact "sends" the `Flip` action to the reducer. And our component is complete!
 
-See that our render function is making reference to `CardView`. Since we're in ReasonML land, we do not need a wrapper for the card view anymore, so we can delete from the `CardView` file. But since the card container will be imported in JS, we need to wrap it instead:
+See that our render function is making reference to `CardView`. Since we're in ReasonML land, we do not need a wrapper for the card view anymore, so we can delete it from the `CardView` file. But since the card container will be imported in JS, we need to wrap it instead:
 
 ```js
 let default =
@@ -429,7 +432,7 @@ let default =
   );
 ```
 
-Now we can import this component directly in our `Card/index.js` file:
+Now we can import this component directly into our `Card/index.js` file:
 
 ```js
 // Card/index.js
@@ -439,19 +442,18 @@ import CardContainer from "./CardContainer.bs";
 export { CardContainer as Card };
 ```
 
-If you prefer, instead of importing the CSS file here, you could add a `[%%raw "import './Card.css'"];` line in the beginning of the `CardView.re` file, with the same effect.
+If you prefer, instead of importing the CSS file here, you could add a `[%%raw "import './Card.css'"];` line at the beginning of the `CardView.re` file, with the same effect.
 
 The final code for the integration with the stateful component [can be found here](https://github.com/lucasmreis/learning-reasonml/tree/integrating_stateful_2/part-2).
 
 ## Conclusions
 
-That's the third strong typed language I've used for front end programming, together with Elm and F#. First of all, it consolidates the feelings that _this is the way to go_. Javascript's dynamic nature gives you a lot of power, but when we're writing larger and larger applications, the types give you a much saner environment. Refactoring does not feel that scary, tootling helps you much more, things are better documented, and so on.
+That's the third strong typed language I've used for front end programming, after Elm and F#. First of all, it confirms my feeling that _this is the way to go_. Javascript's dynamic nature gives you a lot of power, but when we're writing larger and larger applications, these types give you a much saner environment. Refactoring does not feel so scary, tooling helps you much more, things are better documented, and so on.
 
-Now, comparing ReasonML to the other two languages. Elm's architecture (shared by F# with the [Fable-Elmish framework](https://fable-elmish.github.io/elmish/)) is really simple and powerful. It influenced the whole front end world, and ReasonReact's reducer components were definitely inspired by it. In Elm, state and actions handling is done separately from the visual components, in kind of a "global" way. In contrast, ReasonReact embraces the React way of doing things, which is the "everything is a component" mental model. The interesting part is: the reducer components feel a lot like Elm, so in practice, a ReasonReact application feels like composing small Elm applications! By doing that, it's also pretty easy to not only integrate your ReasonML code into your React application, it's relatively easy to get all the benefits from modern tooling, like code splitting and dynamic importing components. This and the fact that the generated JS code is really well optimized are the great benefits of ReasonML over the other two.
+Now, comparing ReasonML to the other two languages. Elm's architecture (shared by F# within the [Fable-Elmish framework](https://fable-elmish.github.io/elmish/)) is really simple and powerful. It has influenced the entire front end world, and ReasonReact's reducer components were definitely inspired by it. In Elm, state and action handling is done separately from the visual components, in kind of a "global" way. In contrast, ReasonReact embraces the React way of doing things, which is the "everything is a component" mentality. The interesting part is: the reducer components feel a lot like Elm, so in practice, a ReasonReact application feels like composing small Elm applications! By doing that, it's also pretty easy to not only integrate your ReasonML code into your React application, but it's also relatively easy to get all the benefits from modern tooling, like code splitting and dynamically importing components. This and the fact that the generated JS code is really well optimized are the great benefits of ReasonML over the other two.
 
-Where do Elm and F# perform better than ReasonML? Elm is still the safer option out there, due to the stricter JS integration. It's much, much easier to avoid runtime errors with it. Also, it has great docs and well thought out standard libraries. F# has the benefit that it can be used both on the frontend and backend of your application, and you can have access to a lot of the .Net features with it. And, as a personal note, I understand the decision to make ReasonML's syntax more "javascript-like", but I feel both Elm's and F#'s syntax are way better and more pleasurable to work with.
+Where do Elm and F# perform better than ReasonML? Elm is still the safer option out there, due to the stricter JS integration. It's much, much easier to avoid runtime errors with Elm. Also, it has great docs and well thought out standard libraries. F# has the benefit that it can be used both on the frontend and backend of your application, and you can have access to a lot of the .Net features with it. And, as a personal note, I understand the decision to make ReasonML's syntax more "javascript-like", but I feel both Elm's and F#'s syntax are way better and more pleasurable to work with.
 
 ## Next Steps
 
 In the third part of this series I'll try to [rewrite `App.js` with ReasonReact](https://github.com/lucasmreis/learning-reasonml/blob/master/part-2/src/App.js)! Let's see how the language feels when we need to perform side effects, work with JSON data, and do some async work. See you there!
-
