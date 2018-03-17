@@ -1,6 +1,6 @@
 ---
 title: Learning ReasonML, part 2
-lead: Integating ReasonML Into a React Application
+lead: Integrating ReasonML Into a React Application
 template: post.hbt
 date: 2018-01-18
 tags: functional, types, reason, reasonml
