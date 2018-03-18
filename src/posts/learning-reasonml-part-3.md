@@ -79,3 +79,223 @@ The `deckId` info is used to draw cards from the same deck that was created in t
 **Note 2:** The `*Failed` actions are not carrying and data with them - that's because this simple app is just showing a generic message when an error happens. That's not what we would do in a large scale app!
 
 ## Modelling The Application State
+
+Depending on the actions issued, our application will be in a different state:
+
+<<< STATE CHART >>>
+
+The states can then be represented by:
+
+```js
+type state =
+  | CreatingDeck
+  | WaitingForUser(deck)
+  | DrawingCards(deck)
+  | NoMoreCardsToDraw(list(card))
+  | Error;
+```
+
+Now let's write the function that, given an action and the previous state, returns a data structure of the type `ReasonReact.update`. You can think of the update type as either a "new state" or "new state + function that perform side effects". This function will be used as the `reducer` field in our component:
+
+```js
+let reducer = (action, _state) =>
+  switch action {
+  | CreateDeck =>
+    ReasonReact.UpdateWithSideEffects(CreatingDeck, createDeckSideEffects)
+  | DeckCreated(deck) => ReasonReact.Update(WaitingForUser(deck))
+  | CreateDeckFailed => ReasonReact.Update(Error)
+  | DrawCards(stateDeck) =>
+    ReasonReact.UpdateWithSideEffects(
+      DrawingCards(stateDeck),
+      drawCardsSideEffects(stateDeck)
+    )
+  | CardsDrawn(deck) => ReasonReact.Update(WaitingForUser(deck))
+  | DrawCardsFailed => ReasonReact.Update(Error)
+  | DeckFinished(cards) => ReasonReact.Update(NoMoreCardsToDraw(cards))
+  };
+```
+
+This function is simple. You can see that every event returned a `ReasonReact.Update` with a new state, and every command return a `ReasonReact.UpdateWithSideEffects` with a new state and another function that will trigger side effects. Let's have a look at those functions now.
+
+## Side Effects
+
+Let's start writing the `createDeckSideEffects` function. ReasonReact's side effects functions receive the components `self` as the parameter, and need to return `unit`. This is what the function should do:
+
+* Fetch the API to create a deck
+* Decode the API response to a `deck` type
+* Dispatch a `DeckCreated(deck)` action with the decoded deck
+* If there is an error, dispatch a `CreateDeckFailed` action
+
+We're going to use the `bs-fetch` [package](https://github.com/reasonml-community/bs-fetch). After installing it, let's use it to fetch the API:
+
+```js
+let createDeckSideEffects = () =>
+  Fetch.fetch("https://deckofcardsapi.com/api/deck/new/shuffle/");
+```
+
+The `fetch` function returns a Promise. We can use the native `Js.Promise` module to deal with the response:
+
+```js
+let createDeckSideEffects = () =>
+  Fetch.fetch("https://deckofcardsapi.com/api/deck/new/shuffle/")
+  |> Js.Promise.then_(Fetch.Response.json);
+```
+
+Ok, now the function has the signature `unit => Js.Promise.t(Js.Json.t)`. We're almost there - now we need to decode the json object to a `deck` record. Let's use the `@glennsl/bs-json` [package](https://github.com/glennsl/bs-json):
+
+```js
+let decodeCreatedDeck = json => {
+  deckId: json |> Json.Decode.field("deck_id", Json.Decode.string),
+  remaining: json |> Json.Decode.field("remaining", Json.Decode.int),
+  cards: []
+};
+
+let createDeckSideEffects = () =>
+  Fetch.fetch("https://deckofcardsapi.com/api/deck/new/shuffle/")
+  |> Js.Promise.then_(Fetch.Response.json)
+  |> Js.Promise.then_(json => decodeCreatedDeck(json) |> Js.Promise.resolve);
+```
+
+The `Json.Decode` functions are straightforward: they try to find the property in the json input object, and then try to convert it to the given type. If they fail, they raise an exception. We're hard coding cards as `[]` because we know that no cards are drawn when the deck is created.
+
+**Note:** If you're used to Elm, that sounds weird - we would use [option types](https://reasonml.github.io/docs/en/variant.html#option) everywhere, and take care of the errors explicitly, near the functions calls. That must be the safest, explicit choice. If we're dealing with exceptions, be careful, since they are implicit, and it's easy to forget to deal with them properly. In a React application, that usually mean you should at least have a [error boundary component](https://reactjs.org/docs/error-boundaries.html) catching them.
+
+Back to our functions, I'm not very happy with the verbosity of them. We can actually say "I'm going to use functions from this module in this piece of code" in ReasonML, in a couple of ways, and it makes our code less verbose. One good technique is using the `open` keyword, and letting the formatter do its work. For example, rewrite the `decodeCreateDeck` as:
+
+```js
+let decodeCreatedDeck = json => {
+  open Json.Decode;
+  {
+    deckId: json |> field("deck_id", string),
+    remaining: json |> field("remaining", int),
+    cards: []
+  };
+};
+```
+
+We're saying the compiler that, in that scope, we're going to call functions inside the `Json.Decode` module. We can now call `field`, `string`, and `int` directly. That's the [standard way to use a module in F#](https://en.wikibooks.org/wiki/F_Sharp_Programming/Modules_and_Namespaces). After saving the file, the formatter change it to:
+
+```js
+let decodeCreatedDeck = json =>
+  Json.Decode.{
+    deckId: json |> field("deck_id", string),
+    remaining: json |> field("remaining", int),
+    cards: []
+  };
+```
+
+This means "you can use functions from this module when defining this record". I don't believe this syntax is better all the time, and fortunately there's a [PR open to not reformat "open" statements](https://github.com/facebook/reason/pull/1826).
+
+We can also open the Js.Promise module in `createDeckSideEffects`:
+
+```js
+let createDeckSideEffects = () =>
+  Js.Promise.(
+    Fetch.fetch("https://deckofcardsapi.com/api/deck/new/shuffle/")
+    |> then_(Fetch.Response.json)
+    |> then_(json => decodeCreatedDeck(json) |> resolve)
+  );
+```
+
+We're doing good now. Our function is almost there, now we need to wrap `deck` into a `DeckCreated` action, and `self.send` it:
+
+```js
+let createDeckSideEffects = self =>
+  Js.Promise.(
+    Fetch.fetch("https://deckofcardsapi.com/api/deck/new/shuffle/")
+    |> then_(Fetch.Response.json)
+    |> then_(json => decodeCreatedDeck(json) |> resolve)
+    |> then_(deck => DeckCreated(deck) |> self.send |> resolve)
+  );
+```
+
+There's a problem here - the compiler is complaining that there's no `send` field defined in `self`. We need to open the ReasonReact module here to, so the compiler understands this function is going to be used in a React component:
+
+```js
+let createDeckSideEffects = self =>
+  ReasonReact.(
+    Js.Promise.(
+      Fetch.fetch("https://deckofcardsapi.com/api/deck/new/shuffle/")
+      |> then_(Fetch.Response.json)
+      |> then_(json => decodeCreatedDeck(json) |> resolve)
+      |> then_(deck => DeckCreated(deck) |> self.send |> resolve)
+    )
+  );
+```
+
+Now our code is compiling (as an observation: this is a situation where I think the "open" keyword would lead to better code). One interesting observation is that the functions inside `then_` need to return a Promise, so that's why there's a `|> resolve` in every callback. Javascript's `.then` do some extra work so you don't need to do that, but I believe that in a strongly typed situation it's best to stick to this simpler constraints.
+
+We're fetching the API, decoding the response, and sending an action as a result. We only need to deal with a possible error, and make sure our function returns `unit`, so it's accepted in the `reducer` function we wrote before:
+
+```js
+let createDeckSideEffects = self =>
+  ReasonReact.(
+    Js.Promise.(
+      Fetch.fetch("https://deckofcardsapi.com/api/deck/new/shuffle/")
+      |> then_(Fetch.Response.json)
+      |> then_(json => decodeCreatedDeck(json) |> resolve)
+      |> then_(deck => DeckCreated(deck) |> self.send |> resolve)
+      |> catch(_error => self.send(CreateDeckFailed) |> resolve)
+      |> ignore
+    )
+  );
+```
+
+And we're done! The next side effects function is more complicated, but we have the knowledge to understand it now:
+
+```js
+let decodeCard = json =>
+  Json.Decode.{
+    code: json |> field("code", string),
+    image: json |> field("image", string)
+  };
+
+/* the decodeCard decoder can be used in another
+   decoder to deal with nested objects: */
+let decodeDeck = json =>
+  Json.Decode.{
+    deckId: json |> field("deck_id", string),
+    remaining: json |> field("remaining", int),
+    cards: json |> field("cards", list(decodeCard))
+  };
+
+
+/* helper function to decide whether we should dispatch
+   a CardsDrawn or a DeckFinished action: */
+let drawnOrFinished = (current, received) =>
+  if (received.remaining > 0) {
+    CardsDrawn({...received, cards: current.cards @ received.cards});
+  } else {
+    DeckFinished(current.cards);
+  };
+
+/* the Pervasives module contains the min function. If we
+   have less than 3 remaining cards, only draw the
+   remaining quantity from the API:   */
+let number_of_cards_per_draw = 3;
+
+let drawQuantity = deck =>
+  Pervasives.min(deck.remaining, number_of_cards_per_draw) |> Js.Int.toString;
+
+let drawCardsSideEffects = (currentDeck, self) =>
+  ReasonReact.(
+    Js.Promise.(
+      Fetch.fetch(
+        "https://deckofcardsapi.com/api/deck/"
+        ++ currentDeck.deckId
+        ++ "/draw/?count="
+        ++ drawQuantity(currentDeck)
+      )
+      |> then_(Fetch.Response.json)
+      |> then_(json => decodeDeck(json) |> resolve)
+      |> then_(receivedDeck =>
+           drawnOrFinished(currentDeck, receivedDeck) |> self.send |> resolve
+         )
+      |> ignore
+    )
+  );
+```
+
+That's it, now our `reducer` function compiles! All our side effects are there, now let's implement the rendering of our main component.
+
+## Rendering The Different States
