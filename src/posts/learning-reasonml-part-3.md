@@ -6,7 +6,7 @@ date: 2018-03-17
 tags: functional, types, reason, reasonml
 ---
 
-<<< INTRO >>>
+In the [last part of this series](http://lucasmreis.github.io/blog/learning-reasonml-part-2/) we wrote some simple React components with ReasonML. In this third part we're going to write a component that not only has state, but also _generate side effects_ through fetching an external API.
 
 ## Modelling User Actions
 
