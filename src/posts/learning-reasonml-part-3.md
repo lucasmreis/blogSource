@@ -299,3 +299,110 @@ let drawCardsSideEffects = (currentDeck, self) =>
 That's it, now our `reducer` function compiles! All our side effects are there, now let's implement the rendering of our main component.
 
 ## Rendering The Different States
+
+Let's start by defining the render functions for the different states. For example, the loading state:
+
+```js
+let renderParagraph = () => (
+  <p> (ReasonReact.stringToElement("Loading...")) </p>
+);
+```
+
+As we saw before, we need the `stringToElement` function to render strings in the DOM. Since our error state is also a simple paragraph, we can reuse some logic:
+
+```js
+let renderParagraph = text => <p> (ReasonReact.stringToElement(text)) </p>;
+
+let renderLoading = () => renderParagraph("Loading...");
+
+let renderError = () =>
+  renderParagraph("There was an error. Please refresh and try again!");
+```
+
+In the `NoMoreCardsToDraw(cards)` state, we only want to render a given list of cards:
+
+```js
+let renderCards = cards => {
+  let cardElements =
+    List.map(c => <CardContainer code=c.code imageSource=c.image />, cards)
+    |> Array.of_list
+    |> ReasonReact.arrayToElement;
+  <div className="App card-list"> cardElements </div>;
+};
+```
+
+There's no "listToElement" function in ReasonReact, so we have to manually convert the list to array with the `Array.of_list` function.
+
+Up until now we're good: all the rendering functions only receive a piece of data and renders it. The next views are a little bit more complicated: in both `WaitingForUser(deck)` and `DrawingCards(deck)` we want to show the cards and the main action button, either in a disabled or enabled state. So let's build a function that takes a `deck` record, a `send` function and a `disabledButton` boolean as parameters:
+
+```js
+/* the disableButton parameter is labelled for no
+   particular reason, just style */
+let renderButtonAndCards = (deck, send, ~disabledButton) =>
+  <div className="App">
+    <button
+      className="App main-action"
+      disabled=(Js.Boolean.to_js_boolean(disabledButton))
+      onClick=(_ev => send(DrawCards(deck)))>
+      (ReasonReact.stringToElement("Draw " ++ drawQuantity(deck)))
+    </button>
+    (renderCards(deck.cards))
+  </div>;
+```
+
+Let's see what's happening here. First, we need to call `Js.Boolean.to_js_boolean` for the disabled attribute. Remember, ReasonML represents booleans as numbers, and whenever we interop with JS or the DOM, we need to convert them to proper JS booleans. We're calling the `send` function on the button click, with the `DrawCards(deck)` action, and also reusing our `renderCards` function we just defined.
+
+Now we can write our main render function:
+
+```js
+let render = self =>
+  ReasonReact.(
+    <div className="App">
+      (
+        switch self.state {
+        | CreatingDeck => renderLoading()
+        | WaitingForUser(deck) =>
+          renderButtonAndCards(deck, self.send, ~disabledButton=false)
+        | DrawingCards(deck) =>
+          renderButtonAndCards(deck, self.send, ~disabledButton=true)
+        | NoMoreCardsToDraw(cards) => renderCards(cards)
+        | Error => renderError()
+        }
+      )
+    </div>
+  );
+```
+
+Simple, right? We open the ReasonReact module, so the compiler understands both `self.state` and `self.send`. We render a container div, and then we pattern match on the state and call the desired render function.
+
+## Glueing The Pieces Together
+
+It's simple to construct our component now:
+
+```js
+let component = ReasonReact.reducerComponent("App");
+
+let make = _self => {
+  ...component,
+  reducer,
+  render,
+  initialState: () => CreatingDeck,
+  didMount: self => {
+    self.send(CreateDeck);
+    ReasonReact.NoUpdate;
+  }
+};
+
+/* wrap it so we don't need to change index.js: */
+let default = ReasonReact.wrapReasonForJs(~component, _jsProps => make([||]));
+```
+
+And we're done! The application is compiling and running. You can see the [final file here](https://github.com/lucasmreis/learning-reasonml/blob/integrating_side_effects/part-2/src/App.re).
+
+## Conclusions
+
+Rewriting a React application in ReasonML is an interesting experience. The types and the compiler make you think harder about both the application state and the user actions. _You are forced to think better about your design_. And this is definitely a good thing; most of the problems we found in software today can be traced to issues not raised properly in _design time_.
+
+Another interesting ([and predictable](http://lucasmreis.github.io/blog/learning-elm-part-1/#first-impressions-of-elm)) effect is how much more _reliable_ the applications seems to be. Even though it still do not have tests, I feel I need many _less_ tests than if it was only the JS version! A lot of the unit tests in every JS project are actually trying to protect the application from type errors, since [they seem to be the main source of error](https://rollbar.com/blog/top-10-javascript-errors/). So, by using a strong typed language, that's a whole category of errors that we can be much more confident about.
+
+I'll definitely continue to look into ReasonML. It seems to give me the benefits of Elm and F#, and seems like it's closer to the React world that I work in my job. Not only I think it's easier to integrate with the current mainstream front end ecossystem, I also believe there's a greater chance with it to convince your company to use a different language than JS :)
