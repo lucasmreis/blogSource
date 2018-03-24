@@ -6,7 +6,7 @@ date: 2018-03-17
 tags: functional, types, reason, reasonml
 ---
 
-In the [last part of this series](http://lucasmreis.github.io/blog/learning-reasonml-part-2/) we wrote some simple React components with ReasonML. In this third part we're going to write a component that not only has state, but also _generate side effects_ through fetching an external API.
+In the [last part of this series,](http://lucasmreis.github.io/blog/learning-reasonml-part-2/) we wrote some simple React components with ReasonML. In this third part, we're going to write a component that not only has state, but also _generates side effects_ through fetching an external API.
 
 ## Modelling User Actions
 
@@ -42,13 +42,15 @@ class App extends Component {
 }
 ```
 
-We can see that there are two main actions that trigger side effects: creating a deck on mounting, and drawing new cards on button click. Remember that side effects of this nature - fetching something from a network - have to take into account that things can get _slow_ and they can _fail_. Having said that, we usually model each of those actions as _three different_ actions:
+We can see that there are two main actions that trigger side effects: creating a deck on mounting, and drawing new cards on button click. Remember that side effects of this nature - fetching something from a network - have to take into account that things can get _slow_ and they can _fail_. Having said that, we usually model actions with side effects as _three different_ actions:
 
 ```js
 type action =
+  /* Create Deck */
   | CreateDeck
   | DeckCreated(deck)
   | CreateDeckFailed
+  /* Draw Cards */
   | DrawCards(deck)
   | CardsDrawn(deck)
   | DrawCardsFailed
@@ -76,13 +78,13 @@ The `deckId` info is used to draw cards from the same deck that was created in t
 
 **Note:** I like to follow this `CQRS` convention of [writing events in the past tense, and commands in the imperative](http://cqrs.nu/Faq). In summary, it means that an action that's written in the imperative will _trigger_ a side effect, and its results are unknown. And actions that are written in the past tense are actions that will trigger a deterministic state change when they happen - there are no unknowns regarding events.
 
-**Note 2:** The `*Failed` actions are not carrying and data with them - that's because this simple app is just showing a generic message when an error happens. That's not what we would do in a large scale app!
+**Note 2:** The `*Failed` actions are not carrying any data with them - that's because this simple app is just showing a generic message when an error occurs. This isn't what we would do in a large scale app!
 
 ## Modelling The Application State
 
 Depending on the actions issued, our application will be in a different state:
 
-<<< STATE CHART >>>
+![State Chart](../assets/learning-reasonml-state-chart.png)
 
 The states can then be represented by:
 
@@ -115,11 +117,11 @@ let reducer = (action, _state) =>
   };
 ```
 
-This function is simple. You can see that every event returned a `ReasonReact.Update` with a new state, and every command return a `ReasonReact.UpdateWithSideEffects` with a new state and another function that will trigger side effects. Let's have a look at those functions now.
+This function is simple. You can see that every event returned a `ReasonReact.Update` with a new state, and every command returned a `ReasonReact.UpdateWithSideEffects` with a new state and another function that will trigger side effects. Let's have a look at those functions now.
 
 ## Side Effects
 
-Let's start writing the `createDeckSideEffects` function. ReasonReact's side effects functions receive the components `self` as the parameter, and need to return `unit`. This is what the function should do:
+Let's start writing the `createDeckSideEffects` function. ReasonReact's side-effect functions receive the components `self` as the parameter, and need to return `unit`. This is what the function should do:
 
 * Fetch the API to create a deck
 * Decode the API response to a `deck` type
@@ -141,7 +143,7 @@ let createDeckSideEffects = () =>
   |> Js.Promise.then_(Fetch.Response.json);
 ```
 
-Ok, now the function has the signature `unit => Js.Promise.t(Js.Json.t)`. We're almost there - now we need to decode the json object to a `deck` record. Let's use the `@glennsl/bs-json` [package](https://github.com/glennsl/bs-json):
+Ok, now the function has the signature `unit => Js.Promise.t(Js.Json.t)`. We're almost there - we just need to decode the json object to a `deck` record. Let's use the `@glennsl/bs-json` [package](https://github.com/glennsl/bs-json):
 
 ```js
 let decodeCreatedDeck = json => {
@@ -158,9 +160,9 @@ let createDeckSideEffects = () =>
 
 The `Json.Decode` functions are straightforward: they try to find the property in the json input object, and then try to convert it to the given type. If they fail, they raise an exception. We're hard coding cards as `[]` because we know that no cards are drawn when the deck is created.
 
-**Note:** If you're used to Elm, that sounds weird - we would use [option types](https://reasonml.github.io/docs/en/variant.html#option) everywhere, and take care of the errors explicitly, near the functions calls. That must be the safest, explicit choice. If we're dealing with exceptions, be careful, since they are implicit, and it's easy to forget to deal with them properly. In a React application, that usually mean you should at least have a [error boundary component](https://reactjs.org/docs/error-boundaries.html) catching them.
+**Note:** If you're used to Elm, that sounds weird - we would use [option types](https://reasonml.github.io/docs/en/variant.html#option) everywhere, and take care of the errors explicitly, near the functions calls. That is probably the safest, most explicit choice. If we're dealing with exceptions, be careful, since they are implicit, and it's easy to forget to deal with them properly. In a React application, that usually means you should at least have an [error boundary component](https://reactjs.org/docs/error-boundaries.html) catching them.
 
-Back to our functions, I'm not very happy with the verbosity of them. We can actually say "I'm going to use functions from this module in this piece of code" in ReasonML, in a couple of ways, and it makes our code less verbose. One good technique is using the `open` keyword, and letting the formatter do its work. For example, rewrite the `decodeCreateDeck` as:
+Back to our functions, they are too verbose. Let's solve this. We can actually say "I'm going to use functions from this module in this piece of code" in ReasonML, in a couple of ways, and this makes our code less verbose. One good technique is using the `open` keyword, and letting the formatter do its work. For example, rewrite the `decodeCreateDeck` as:
 
 ```js
 let decodeCreatedDeck = json => {
@@ -173,7 +175,7 @@ let decodeCreatedDeck = json => {
 };
 ```
 
-We're saying the compiler that, in that scope, we're going to call functions inside the `Json.Decode` module. We can now call `field`, `string`, and `int` directly. That's the [standard way to use a module in F#](https://en.wikibooks.org/wiki/F_Sharp_Programming/Modules_and_Namespaces). After saving the file, the formatter change it to:
+We're telling the compiler that, in the scope, we're going to call functions inside the `Json.Decode` module. We can now call `field`, `string`, and `int` directly. That's the [standard way to use a module in F#](https://en.wikibooks.org/wiki/F_Sharp_Programming/Modules_and_Namespaces). After saving the file, the formatter changes it to:
 
 ```js
 let decodeCreatedDeck = json =>
@@ -184,7 +186,7 @@ let decodeCreatedDeck = json =>
   };
 ```
 
-This means "you can use functions from this module when defining this record". I don't believe this syntax is better all the time, and fortunately there's a [PR open to not reformat "open" statements](https://github.com/facebook/reason/pull/1826).
+This means "you can use functions from this module when defining this record". I don't believe this syntax is better all the time, but fortunately there's a [PR open to not reformat "open" statements](https://github.com/facebook/reason/pull/1826).
 
 We can also open the Js.Promise module in `createDeckSideEffects`:
 
@@ -209,7 +211,7 @@ let createDeckSideEffects = self =>
   );
 ```
 
-There's a problem here - the compiler is complaining that there's no `send` field defined in `self`. We need to open the ReasonReact module here to, so the compiler understands this function is going to be used in a React component:
+There's a problem here - the compiler is complaining that there's no `send` field defined in `self`. We need to open the ReasonReact module here too, so the compiler understands this function is going to be used in a React component:
 
 ```js
 let createDeckSideEffects = self =>
@@ -223,9 +225,9 @@ let createDeckSideEffects = self =>
   );
 ```
 
-Now our code is compiling (as an observation: this is a situation where I think the "open" keyword would lead to better code). One interesting observation is that the functions inside `then_` need to return a Promise, so that's why there's a `|> resolve` in every callback. Javascript's `.then` do some extra work so you don't need to do that, but I believe that in a strongly typed situation it's best to stick to this simpler constraints.
+Now our code is compiling (as an observation: this is a situation where I think the "open" keyword would lead to better code). One interesting observation is that the functions inside `then_` need to return a Promise, so that's why there's a `|> resolve` in every callback. Javascript's `.then` does some extra work, so you don't need to do that, but I believe that in a strongly typed situation it's best to stick to simpler constraints.
 
-We're fetching the API, decoding the response, and sending an action as a result. We only need to deal with a possible error, and make sure our function returns `unit`, so it's accepted in the `reducer` function we wrote before:
+We're fetching the API, decoding the response, and sending an action as a result. We only need to deal with a possible error, and make sure our function returns `unit` so it's accepted in the `reducer` function we wrote before:
 
 ```js
 let createDeckSideEffects = self =>
@@ -241,7 +243,7 @@ let createDeckSideEffects = self =>
   );
 ```
 
-And we're done! The next side effects function is more complicated, but we have the knowledge to understand it now:
+And we're done! The next side-effects function is more complicated, but we have the knowledge to understand it now:
 
 ```js
 let decodeCard = json =>
@@ -258,7 +260,6 @@ let decodeDeck = json =>
     remaining: json |> field("remaining", int),
     cards: json |> field("cards", list(decodeCard))
   };
-
 
 /* helper function to decide whether we should dispatch
    a CardsDrawn or a DeckFinished action: */
@@ -333,7 +334,7 @@ let renderCards = cards => {
 
 There's no "listToElement" function in ReasonReact, so we have to manually convert the list to array with the `Array.of_list` function.
 
-Up until now we're good: all the rendering functions only receive a piece of data and renders it. The next views are a little bit more complicated: in both `WaitingForUser(deck)` and `DrawingCards(deck)` we want to show the cards and the main action button, either in a disabled or enabled state. So let's build a function that takes a `deck` record, a `send` function and a `disabledButton` boolean as parameters:
+Up until now we're good: all the rendering functions only receive a piece of data and render it. The next views are a little bit more complicated: in both `WaitingForUser(deck)` and `DrawingCards(deck)` we want to show the cards and the main action button, either in a disabled or enabled state. So let's build a function that takes a `deck` record, a `send` function and a `disabledButton` boolean as parameters:
 
 ```js
 /* the disableButton parameter is labelled for no
@@ -401,8 +402,8 @@ And we're done! The application is compiling and running. You can see the [final
 
 ## Conclusions
 
-Rewriting a React application in ReasonML is an interesting experience. The types and the compiler make you think harder about both the application state and the user actions. _You are forced to think better about your design_. And this is definitely a good thing; most of the problems we found in software today can be traced to issues not raised properly in _design time_.
+Rewriting a React application in ReasonML is an interesting experience. The types and the compiler make you think harder about both the application state and the user actions. _You are forced to think better about your design_. And this is definitely a good thing; most of the problems we find in software today can be traced to issues not raised properly in _design time_.
 
-Another interesting ([and predictable](http://lucasmreis.github.io/blog/learning-elm-part-1/#first-impressions-of-elm)) effect is how much more _reliable_ the applications seems to be. Even though it still do not have tests, I feel I need many _less_ tests than if it was only the JS version! A lot of the unit tests in every JS project are actually trying to protect the application from type errors, since [they seem to be the main source of error](https://rollbar.com/blog/top-10-javascript-errors/). So, by using a strong typed language, that's a whole category of errors that we can be much more confident about.
+Another interesting ([and predictable](http://lucasmreis.github.io/blog/learning-elm-part-1/#first-impressions-of-elm)) effect is how much more _reliable_ the applications seem to be. Even though it still doesn't have tests, I feel I need _fewer_ tests than if it was only the JS version! A lot of the unit tests in every JS project are actually trying to protect the application from type errors, since [they seem to be the main source of error](https://rollbar.com/blog/top-10-javascript-errors/). So, by using a strong typed language, that's a whole category of errors that we can be much more confident about.
 
-I'll definitely continue to look into ReasonML. It seems to give me the benefits of Elm and F#, and seems like it's closer to the React world that I work in my job. Not only I think it's easier to integrate with the current mainstream front end ecossystem, I also believe there's a greater chance with it to convince your company to use a different language than JS :)
+I'll definitely continue to look into ReasonML. It gives me the benefits of Elm and F#, and seems closer to the React world that I use in my in my day to day work. Not only do I think it's easier to integrate with the current mainstream front-end ecossystem, I also believe it presents a greater chance to convince your company to use a different language than JS :)
