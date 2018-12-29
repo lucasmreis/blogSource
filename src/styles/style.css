@@ -152,6 +152,8 @@ footer a {
 }
 
 .index-list .date {
+  display: inline-block;
+  width: 120px;
   font-family: 'Lato', sans-serif;
 }
 

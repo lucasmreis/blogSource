@@ -42,7 +42,15 @@
         </ul>
       </header>
       <div id="main-text">
-        <h1>{{ title }}</h1>
+        {{#if video }}
+          <h1>[video] {{ title }}</h1>
+        {{else}}
+          {{#if podcast }}
+            <h1>[podcast] {{ title }}</h1>
+          {{else}}
+            <h1>{{ title }}</h1>
+          {{/if}}  
+        {{/if}}
         <div class="lead">{{ lead }}</div>
         {{{ contents }}}
         <div class="signature">{{ longDate }}.</div>

@@ -45,7 +45,14 @@
       <div id="main-text">
         {{#posts}}
           <div class="index-list">
-            <span class="date">{{shortDate}} - </span><a href="../{{link}}/">{{title}}</a>
+            <span class="date">{{shortDate}}</span>
+            {{#if video}}
+              [video]
+            {{/if}}
+            {{#if podcast}}
+              [podcast]
+            {{/if}}
+            <a href="../{{link}}/">{{title}}</a>
           </div>
         {{/posts}}
       </div>
